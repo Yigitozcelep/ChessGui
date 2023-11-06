@@ -1,0 +1,26 @@
+body {
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+#board_container{
+  width: 100vw;
+  height: 100vh;
+  background-color: rgb(135, 124, 124);
+}
+
+#board_div {
+  width: 720px;
+  height: 720px;
+  border: 1rem solid;
+  position: absolute;
+  left: 10vw;
+  top: 10vh;
+}
+
+.piece {
+  position: absolute;
+  left: 15px;
+  top: 15px;
+}
