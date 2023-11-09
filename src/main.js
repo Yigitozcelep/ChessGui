@@ -2,7 +2,6 @@
 const invoke = window.__TAURI__.invoke
 
 const BOARD_CONTAINER = document.getElementById("board_container")
-const BOARD_DIV = document.getElementById("board_div");
 const FILES = ["a","b","c","d","e","f","g","h"]
 
 let isFollowing = false;
@@ -61,7 +60,10 @@ const CreateBoardSvg = () => {
   board.style.width  = "100%";
   board.style.height = "100%";
   board.style.position = "absolute"
-  BOARD_DIV.appendChild(board)
+  let board_div = document.createElement("div");
+  board_div.classList.add("board_div");
+  board_div.appendChild(board);
+  BOARD_CONTAINER.appendChild(board_div);
 }
 
 const findCurrentMoves = (moves, rank, file) => {
@@ -102,13 +104,32 @@ const CreatePieces = (moves) => {
 }
 
 const GetMoves = async () => {
-  return invoke("get_moves");
+  return invoke("get_moves", {fen: fen});
+}
+
+const labeledKing = () => {
+  invoke("get_king_coor", {fen: fen}).then((coor) => {
+    let res = getSquare(coor);
+    let rank = Math.floor(res / 8);
+    let file = res % 8;
+    let under_attacked = document.createElement("div");
+    under_attacked.classList.add("king_under_attacked");
+    under_attacked.style.left = file * 90 + 100 + 16 + "px";
+    under_attacked.style.top = (8 - rank) * 90  + 16 + "px";
+    BOARD_CONTAINER.appendChild(under_attacked);
+  })
+  
 }
 
 const BuildBoard = ()  => {
+  allImgs = [];
+  BOARD_CONTAINER.innerHTML = "";
   CreateBoardSvg();
   GetMoves().then((moves) => {
     CreatePieces(moves);
+    invoke("is_king_attacked", {fen: fen}).then((res) => {
+      if (res) labeledKing()
+    })
   })
 }
 
@@ -133,37 +154,42 @@ const createTargetDiv = (move) => {
   BOARD_CONTAINER.appendChild(targetDiv);
 }
 
-const getTargetSquare = (e) => {
+const getMoveOfTargetSquare = (e) => {
   for (let i = 0; i < targetSquares.length; i++) {
     let target = targetSquares[i];
     let left = target.style.left.slice(0, -2) - 0;
     let top  = target.style.top.slice(0, -2) - 0;
     if (left <= e.pageX && e.pageX <= left + 89 && top <= e.pageY && e.pageY <= top + 89) {
-      return target;
+      return target.move;
     }
   }
 }
 
-const makeMove = (targetSquare) => {
-  
+const makeMove = (move) => {
+  invoke("make_move", {fen: fen, mov: move}).then((res) => {
+    fen = res;
+    BuildBoard()
+  })
 }
 
-const resetToInitialState = () => {
+const resetToInitialState = (move) => {
   for (let i = 0; i < targetSquares.length; i++) {
     BOARD_CONTAINER.removeChild(targetSquares[i]);
   }
   targetSquares = [];
   isFollowing = false;
-  currentImg.style.left = currentImg.current_left;
-  currentImg.style.top  = currentImg.current_top;
-  currentImg.classList.remove("grabbing");
+  if (!move) {
+    currentImg.style.left = currentImg.current_left;
+    currentImg.style.top  = currentImg.current_top;
+    currentImg.classList.remove("grabbing");
+  }
 }
 
 document.addEventListener("click", (e) => {
   if (isFollowing) {
-    let targetSquare = getTargetSquare(e)
-    if (targetSquare) makeMove(targetSquare)
-    else resetToInitialState();
+    let move = getMoveOfTargetSquare(e)
+    resetToInitialState(move);
+    if (move) makeMove(move);
     return;
   }
   for (let i = 0; i < allImgs.length; i++) {

@@ -10,7 +10,7 @@ body {
   background-color: rgb(135, 124, 124);
 }
 
-#board_div {
+.board_div {
   width: 720px;
   height: 720px;
   border: 16px solid;
@@ -31,6 +31,15 @@ body {
   width: 89px;
   height: 89px;
   background-color: red;
+  position: absolute;
+  border: 1px solid;
+}
+
+
+.king_under_attacked {
+  width: 89px;
+  height: 89px;
+  background-color: rgb(205, 97, 97);
   position: absolute;
   border: 1px solid;
 }
