@@ -8,7 +8,8 @@ let isFollowing = false;
 let allImgs = [];
 let currentImg;
 let targetSquares = [];
-let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+//let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+let fen = "2K5/8/2q5/1k6/8/8/8/8 w - - 2 2";
 
 const isNumeric = (value) => {
   return /^-?\d+$/.test(value);
