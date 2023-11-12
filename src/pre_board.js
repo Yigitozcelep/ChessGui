@@ -1,10 +1,12 @@
-import {BuildBoard } from "./main.js";
+import {BuildBoard} from "./main.js";
 
 const BOARD_CONTAINER = document.getElementById("board_container");
 
 const createMainMenu = () => {
     window.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    window.prev_fen = "";
     window.chess_engine_color = "";
+    document.getElementById("board_div").style.visibility = "hidden";
     let fen_div = document.createElement("div");
     fen_div.innerHTML += "Fen:";
     fen_div.classList.add("fen");
@@ -19,6 +21,8 @@ const createMainMenu = () => {
     button_person_vs_person.style.left = "10vw"
     button_person_vs_person.onclick = () => {
         window.fen = input.value.trim();
+        document.getElementById("board_div").style.visibility = "visible";
+        BOARD_CONTAINER.innerHTML = "";
         BuildBoard();
     }
     let button_person_vs_engine_white = document.createElement("button");
@@ -28,6 +32,8 @@ const createMainMenu = () => {
     button_person_vs_engine_white.onclick = () => {
         window.fen = input.value.trim();
         window.chess_engine_color = "b";
+        document.getElementById("board_div").style.visibility = "visible";
+        BOARD_CONTAINER.innerHTML = "";
         BuildBoard();
     }
 

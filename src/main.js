@@ -34,14 +34,14 @@ const CreateItem = (square, type, color, moves) => {
   img.src = file_name;
   img.style.position = "absolute"
   
-  if (piece[0] === color) {img.classList.add("grabbable")}
+  if (piece[0] === color && piece[0] !== window.chess_engine_color) {img.classList.add("grabbable")}
   img.classList.add(FILES[file] + rank);
   img.style.width = "60px";
   img.style.height = "60px"
   img.style.left = file * 90 + 100 + 30 + "px";
   img.style.top  = (8 - rank) * 90  + 30 + "px";
-  img.style.zIndex = "2";
-  if (piece[0] === window.chess_engine_color) img.style.transition = "all 1.2s ease";
+  img.style.zIndex = "3";
+  if (piece[0] === window.chess_engine_color) img.style.transition = "all 0.7s ease";
   img.current_left = img.style.left;
   img.current_top  = img.style.top;
   img.current_moves = moves;
@@ -51,18 +51,6 @@ const CreateItem = (square, type, color, moves) => {
   })
   allImgs.push(img);
   BOARD_CONTAINER.appendChild(img);
-}
-
-const createBoardSvg = () => {
-  let board = document.createElement("img");
-  board.src = "./svgs/board.svg";
-  board.style.width  = "100%";
-  board.style.height = "100%";
-  board.style.position = "absolute"
-  let board_div = document.createElement("div");
-  board_div.classList.add("board_div");
-  board_div.appendChild(board);
-  BOARD_CONTAINER.appendChild(board_div);
 }
 
 const findCurrentMoves = (moves, rank, file) => {
@@ -111,6 +99,7 @@ const labeledKing = () => {
     under_attacked.classList.add("king_under_attacked");
     under_attacked.style.left = file * 90 + 100 + 16 + "px";
     under_attacked.style.top = (8 - rank) * 90  + 16 + "px";
+    under_attacked.style.zIndex = "1";
     BOARD_CONTAINER.appendChild(under_attacked);
   })
   
@@ -118,9 +107,8 @@ const labeledKing = () => {
 
 const BuildBoard = ()  => {
   allImgs = [];
-  BOARD_CONTAINER.innerHTML = "";
-  createBoardSvg();
   invoke("get_moves", {fen: window.fen}).then((moves) => {
+    BOARD_CONTAINER.innerHTML = "";
     CreatePieces(moves);
     invoke("is_king_attacked", {fen: window.fen}).then((res) => {
       if (res) labeledKing()
@@ -145,6 +133,7 @@ const createTargetDiv = (move) => {
   let file = target % 8;
   targetDiv.style.left = file * 90 + 100 + 16 + "px";
   targetDiv.style.top = (8 - rank) * 90  + 16 + "px";
+  targetDiv.style.zIndex = "2";
   targetSquares.push(targetDiv);
   BOARD_CONTAINER.appendChild(targetDiv);
 }
@@ -162,10 +151,10 @@ const getMoveOfTargetSquare = (e) => {
 
 const makeEngineMove = () => {
   invoke("get_engine_move", {fen: window.fen}).then((res) => {
-    console.log(res);
     let squareName = res.split(";")[0].slice(0,2);
     let current = getSquare(res.split(";")[0]);
     let target  = getSquare(res.split(";")[0].slice(2, 4));
+    console.log(allImgs);
     for (let i = 0; i < allImgs.length; i++) {
       if (allImgs[i].current_moves.length == 0) continue;
       if (allImgs[i].current_moves[0].slice(0,2) == squareName) {
@@ -185,8 +174,10 @@ const makeEngineMove = () => {
 const makeMove = (move) => {
   invoke("make_move", {fen: window.fen, mov: move}).then((res) => {
     window.fen = res;
-    BuildBoard()
-    if (res.split(" ")[1] == window.chess_engine_color) makeEngineMove();
+    BuildBoard();
+    if (res.split(" ")[1] === window.chess_engine_color) {
+      setTimeout(makeEngineMove, 200)
+    };
   })
 }
 
