@@ -41,7 +41,7 @@ const CreateItem = (square, type, color, moves) => {
   img.style.left = file * 90 + 100 + 30 + "px";
   img.style.top  = (8 - rank) * 90  + 30 + "px";
   img.style.zIndex = "3";
-  if (piece[0] === window.chess_engine_color) img.style.transition = "all 0.7s ease";
+  if (piece[0] === window.chess_engine_color) img.style.transition = "all 0.5s ease";
   img.current_left = img.style.left;
   img.current_top  = img.style.top;
   img.current_moves = moves;
@@ -176,7 +176,7 @@ const makeMove = (move) => {
     window.fen = res;
     BuildBoard();
     if (res.split(" ")[1] === window.chess_engine_color) {
-      setTimeout(makeEngineMove, 200)
+      setTimeout(makeEngineMove, 150)
     };
   })
 }
@@ -220,4 +220,4 @@ document.addEventListener('dragstart', function(event) {
   event.preventDefault();
 });
 
-export {BuildBoard}
+export {BuildBoard, makeEngineMove}

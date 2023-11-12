@@ -1,4 +1,4 @@
-import {BuildBoard} from "./main.js";
+import {BuildBoard, makeEngineMove} from "./main.js";
 
 const BOARD_CONTAINER = document.getElementById("board_container");
 
@@ -41,6 +41,14 @@ const createMainMenu = () => {
     button_person_vs_engine_black.innerHTML = "Person Vs Engine (black)";
     button_person_vs_engine_black.classList.add("options");
     button_person_vs_engine_black.style.left = "50vw"
+    button_person_vs_engine_black.onclick = () => {
+        window.fen = input.value.trim();
+        window.chess_engine_color = "w";
+        document.getElementById("board_div").style.visibility = "visible";
+        BOARD_CONTAINER.innerHTML = "";
+        BuildBoard();
+        setTimeout(makeEngineMove(), 150);
+    }
 
     let button_engine_vs_engine = document.createElement("button");
     button_engine_vs_engine.innerHTML = "Engine Vs Engine";
