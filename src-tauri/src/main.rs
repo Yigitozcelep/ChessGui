@@ -25,10 +25,14 @@ fn get_king_coor(fen: String) -> String {
     persa_chess::get_king_coor(fen)
 }
 
+#[tauri::command]
+fn get_engine_move(fen: String) -> String {
+    persa_chess::get_best_move(fen, 4)
+}
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![get_moves, make_move, is_king_attacked, get_king_coor])
+        .invoke_handler(tauri::generate_handler![get_moves, make_move, is_king_attacked, get_king_coor, get_engine_move])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

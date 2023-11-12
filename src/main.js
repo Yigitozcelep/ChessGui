@@ -1,4 +1,3 @@
-
 const invoke = window.__TAURI__.invoke
 
 const BOARD_CONTAINER = document.getElementById("board_container")
@@ -8,8 +7,6 @@ let isFollowing = false;
 let allImgs = [];
 let currentImg;
 let targetSquares = [];
-//let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-let fen = "2K5/8/2q5/1k6/8/8/8/8 w - - 2 2";
 
 const isNumeric = (value) => {
   return /^-?\d+$/.test(value);
@@ -44,6 +41,7 @@ const CreateItem = (square, type, color, moves) => {
   img.style.left = file * 90 + 100 + 30 + "px";
   img.style.top  = (8 - rank) * 90  + 30 + "px";
   img.style.zIndex = "2";
+  if (piece[0] === window.chess_engine_color) img.style.transition = "all 1.2s ease";
   img.current_left = img.style.left;
   img.current_top  = img.style.top;
   img.current_moves = moves;
@@ -55,7 +53,7 @@ const CreateItem = (square, type, color, moves) => {
   BOARD_CONTAINER.appendChild(img);
 }
 
-const CreateBoardSvg = () => {
+const createBoardSvg = () => {
   let board = document.createElement("img");
   board.src = "./svgs/board.svg";
   board.style.width  = "100%";
@@ -91,8 +89,8 @@ const getCurrentMoves = (square, moves) => {
 const CreatePieces = (moves) => {
   let square = 56;
   let currentMoves = [];
-  let color = fen.split(" ")[1];
-  let boardString = fen.split(" ")[0];
+  let color = window.fen.split(" ")[1];
+  let boardString = window.fen.split(" ")[0];
   for (let i = 0; i < boardString.length; i++) {
     if (isNumeric(boardString[i])) { square += parseInt(boardString[i]); }
     else if (boardString[i] == "/") square += -16;
@@ -104,12 +102,8 @@ const CreatePieces = (moves) => {
   }
 }
 
-const GetMoves = async () => {
-  return invoke("get_moves", {fen: fen});
-}
-
 const labeledKing = () => {
-  invoke("get_king_coor", {fen: fen}).then((coor) => {
+  invoke("get_king_coor", {fen: window.fen}).then((coor) => {
     let res = getSquare(coor);
     let rank = Math.floor(res / 8);
     let file = res % 8;
@@ -125,10 +119,10 @@ const labeledKing = () => {
 const BuildBoard = ()  => {
   allImgs = [];
   BOARD_CONTAINER.innerHTML = "";
-  CreateBoardSvg();
-  GetMoves().then((moves) => {
+  createBoardSvg();
+  invoke("get_moves", {fen: window.fen}).then((moves) => {
     CreatePieces(moves);
-    invoke("is_king_attacked", {fen: fen}).then((res) => {
+    invoke("is_king_attacked", {fen: window.fen}).then((res) => {
       if (res) labeledKing()
     })
   })
@@ -166,10 +160,33 @@ const getMoveOfTargetSquare = (e) => {
   }
 }
 
+const makeEngineMove = () => {
+  invoke("get_engine_move", {fen: window.fen}).then((res) => {
+    console.log(res);
+    let squareName = res.split(";")[0].slice(0,2);
+    let current = getSquare(res.split(";")[0]);
+    let target  = getSquare(res.split(";")[0].slice(2, 4));
+    for (let i = 0; i < allImgs.length; i++) {
+      if (allImgs[i].current_moves.length == 0) continue;
+      if (allImgs[i].current_moves[0].slice(0,2) == squareName) {
+        let left = parseInt(allImgs[i].style.left.slice(0, -2));
+        let top  = parseInt(allImgs[i].style.top.slice(0, -2));
+        allImgs[i].addEventListener("transitionend", (e) => {
+          window.fen = res.split(";")[2];
+          BuildBoard();
+        })
+        allImgs[i].style.left = (left + ((target % 8) - (current % 8)) * 90) + "px";
+        allImgs[i].style.top  = (top + (Math.floor(current / 8) - Math.floor(target / 8)) * 90) + "px";
+      }
+    }
+  })
+}
+
 const makeMove = (move) => {
-  invoke("make_move", {fen: fen, mov: move}).then((res) => {
-    fen = res;
+  invoke("make_move", {fen: window.fen, mov: move}).then((res) => {
+    window.fen = res;
     BuildBoard()
+    if (res.split(" ")[1] == window.chess_engine_color) makeEngineMove();
   })
 }
 
@@ -212,4 +229,4 @@ document.addEventListener('dragstart', function(event) {
   event.preventDefault();
 });
 
-BuildBoard();
+export {BuildBoard}

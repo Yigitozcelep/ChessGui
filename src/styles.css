@@ -8,6 +8,7 @@ body {
   width: 100vw;
   height: 100vh;
   background-color: rgb(135, 124, 124);
+  display: flex;
 }
 
 .board_div {
@@ -42,4 +43,33 @@ body {
   background-color: rgb(205, 97, 97);
   position: absolute;
   border: 1px solid;
+}
+
+.input_entry {
+  left: 19vw;
+  top: 20vh;
+  width: 65vw;
+  height: 4vh;
+  background-color: rgb(55, 52, 52);
+  font-size: 2vw;
+  color: white;
+  position: absolute;
+}
+
+.fen {
+  width: 4vw;
+  height: 4vh;
+  font-size: 5vw;
+  top: 19.5vh;
+  left: 8vw;
+  position: absolute;
+}
+
+.options {
+  width: 15vw;
+  height: 15vw;
+  top: 35vh;
+  position: absolute;
+  font-size: 3vw;
+  background-color: red;
 }
