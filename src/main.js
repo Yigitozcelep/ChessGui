@@ -189,16 +189,20 @@ const getMoveOfTargetSquare = (e) => {
   }
 }
 
+const createEvalLabel = (eval_res) => {
+  document.getElementById("eval_res").innerHTML = "Eval: " + (eval_res / 1000).toFixed(2);
+}
+
 const makeEngineMove = (buildBoardType) => {
   invoke("get_engine_move", {fen: window.fen}).then((res) => {
     let squareName = res.split(";")[0].slice(0,2);
     let current = getSquare(res.split(";")[0]);
     let target  = getSquare(res.split(";")[0].slice(2, 4));
     let counter = 0;
+    createEvalLabel(res.split(";")[1])
     for (let i = 0; i < allImgs.length; i++) {
       if (allImgs[i].current_moves.length == 0) continue;
       if (allImgs[i].current_moves[0].slice(0,2) == squareName) {
-        console.log("geliyor");
         let left = parseInt(allImgs[i].style.left.slice(0, -2));
         let top  = parseInt(allImgs[i].style.top.slice(0, -2));
         allImgs[i].style.left = (left + ((target % 8) - (current % 8)) * 90) + "px";

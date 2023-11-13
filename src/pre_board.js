@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 const createMainMenu = () => {
     BOARD_CONTAINER.innerHTML = "";
+    document.getElementById("eval_res").style.visibility = "hidden";
+    document.getElementById("eval_res").innerHTML = "";
+    
     window.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     window.chess_engine_color = "";
     document.getElementById("board_div").style.visibility = "hidden";
@@ -26,6 +29,7 @@ const createMainMenu = () => {
     button_person_vs_person.style.left = "10vw"
     button_person_vs_person.onclick = () => {
         window.fen = input.value.trim();
+        document.getElementById("eval_res").style.visibility = "visible";
         document.getElementById("board_div").style.visibility = "visible";
         BOARD_CONTAINER.innerHTML = "";
         BuildBoard();
@@ -38,6 +42,7 @@ const createMainMenu = () => {
     button_person_vs_engine_white.onclick = () => {
         window.fen = input.value.trim();
         window.chess_engine_color = "b";
+        document.getElementById("eval_res").style.visibility = "visible";
         document.getElementById("board_div").style.visibility = "visible";
         BOARD_CONTAINER.innerHTML = "";
         BuildBoard();
@@ -54,6 +59,7 @@ const createMainMenu = () => {
     button_person_vs_engine_black.onclick = () => {
         window.fen = input.value.trim();
         window.chess_engine_color = "w";
+        document.getElementById("eval_res").style.visibility = "visible";
         document.getElementById("board_div").style.visibility = "visible";
         BOARD_CONTAINER.innerHTML = "";
         BuildBoard();
@@ -71,6 +77,7 @@ const createMainMenu = () => {
     button_engine_vs_engine.onclick = () => {
         window.fen = input.value.trim();
         window.chess_engine_color = "wb";
+        document.getElementById("eval_res").style.visibility = "visible";
         document.getElementById("board_div").style.visibility = "visible";
         BOARD_CONTAINER.innerHTML = "";
         BuildBoardEngineVsEngine();
