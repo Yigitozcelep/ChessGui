@@ -114,6 +114,7 @@ const labelTheResult = (result) => {
 
 
 const BuildBoard = ()  => {
+  if (document.getElementById("board_div").style.visibility === "hidden") return;
   allImgs = [];
   targetSquares = [];
   isFollowing = false;
@@ -134,6 +135,7 @@ const BuildBoard = ()  => {
 }
 
 const BuildBoardEngineVsEngine = () => {
+  if (document.getElementById("board_div").style.visibility === "hidden") return;
   allImgs = [];
   targetSquares = [];
   isFollowing = false;
