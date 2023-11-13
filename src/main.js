@@ -41,7 +41,7 @@ const CreateItem = (square, type, color, moves) => {
   img.style.left = file * 90 + 100 + 30 + "px";
   img.style.top  = (8 - rank) * 90  + 30 + "px";
   img.style.zIndex = "3";
-  if (piece[0] === window.chess_engine_color) img.style.transition = "all 0.5s ease";
+  if (piece[0] === window.chess_engine_color) img.style.transition = "all 0.3s ease";
   img.current_left = img.style.left;
   img.current_top  = img.style.top;
   img.current_moves = moves;
@@ -105,13 +105,30 @@ const labeledKing = () => {
   
 }
 
+const labelTheResult = (result) => {
+  let div = document.createElement("div");
+  div.innerHTML = result;
+  div.classList.add("winner_label")
+  BOARD_CONTAINER.appendChild(div);
+}
+
+
 const BuildBoard = ()  => {
   allImgs = [];
+  targetSquares = [];
+  isFollowing = false;
   invoke("get_moves", {fen: window.fen}).then((moves) => {
-    BOARD_CONTAINER.innerHTML = "";
-    CreatePieces(moves);
     invoke("is_king_attacked", {fen: window.fen}).then((res) => {
+      BOARD_CONTAINER.innerHTML = "";
+      CreatePieces(moves);
       if (res) labeledKing()
+      if (moves.length === 0) {
+        if (res) {
+          if   (window.fen.split(" ")[1] == "w") {labelTheResult("Black Win")}
+          else {labelTheResult("White Win")}
+        }
+        else labelTheResult("Draw") 
+      }
     })
   })
 }
@@ -154,7 +171,6 @@ const makeEngineMove = () => {
     let squareName = res.split(";")[0].slice(0,2);
     let current = getSquare(res.split(";")[0]);
     let target  = getSquare(res.split(";")[0].slice(2, 4));
-    console.log(allImgs);
     for (let i = 0; i < allImgs.length; i++) {
       if (allImgs[i].current_moves.length == 0) continue;
       if (allImgs[i].current_moves[0].slice(0,2) == squareName) {

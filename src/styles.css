@@ -77,5 +77,45 @@ body {
   top: 35vh;
   position: absolute;
   font-size: 3vw;
-  background-color: red;
+}
+
+#go_back_main_menu {
+  width: 200px;
+  height: 50px;
+  font-size: 20px;
+  z-index: 10;
+  left: 5px;
+  top: 5px;
+  position: absolute;
+}
+
+.manuel_button {
+  z-index: 10;
+  background-color: rgb(100, 94, 94);
+  border-radius: 3px;
+  border:1px solid #000000;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.manuel_button:hover {
+  background-color: rgb(127, 119, 119);
+}
+
+.manuel_button:active {
+  background-color: #cdcdcd;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
+
+.winner_label {
+  width: 250;
+  height: 50px;
+  left: 250px;
+  top: 5px;
+  font-size: 40px;
+  position: absolute;
+  background-color: rgb(135, 124, 124);
 }
