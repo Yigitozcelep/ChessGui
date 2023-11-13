@@ -34,14 +34,14 @@ const CreateItem = (square, type, color, moves) => {
   img.src = file_name;
   img.style.position = "absolute"
   
-  if (piece[0] === color && piece[0] !== window.chess_engine_color) {img.classList.add("grabbable")}
+  if (piece[0] === color && !window.chess_engine_color.includes(piece[0])) {img.classList.add("grabbable")}
   img.classList.add(FILES[file] + rank);
   img.style.width = "60px";
   img.style.height = "60px"
   img.style.left = file * 90 + 100 + 30 + "px";
   img.style.top  = (8 - rank) * 90  + 30 + "px";
   img.style.zIndex = "3";
-  if (piece[0] === window.chess_engine_color) img.style.transition = "all 0.3s ease";
+  if (window.chess_engine_color.includes(piece[0])) img.style.transition = "all 0.3s ease";
   img.current_left = img.style.left;
   img.current_top  = img.style.top;
   img.current_moves = moves;
@@ -133,6 +133,27 @@ const BuildBoard = ()  => {
   })
 }
 
+const BuildBoardEngineVsEngine = () => {
+  allImgs = [];
+  targetSquares = [];
+  isFollowing = false;
+  invoke("get_moves", {fen: window.fen}).then((moves) => {
+    invoke("is_king_attacked", {fen: window.fen}).then((res) => {
+      BOARD_CONTAINER.innerHTML = "";
+      CreatePieces(moves);
+      if (res) labeledKing()
+      if (moves.length === 0) {
+        if (res) {
+          if   (window.fen.split(" ")[1] == "w") {labelTheResult("Black Win")}
+          else {labelTheResult("White Win")}
+        }
+        else labelTheResult("Draw") 
+      }
+      else setTimeout(() => makeEngineMove(BuildBoardEngineVsEngine), 300);
+    })
+  })
+}
+
 document.addEventListener("mousemove", (e) => {
   if (isFollowing) {
     currentImg.style.top = e.pageY - 30 + "px";
@@ -166,22 +187,24 @@ const getMoveOfTargetSquare = (e) => {
   }
 }
 
-const makeEngineMove = () => {
+const makeEngineMove = (buildBoardType) => {
   invoke("get_engine_move", {fen: window.fen}).then((res) => {
     let squareName = res.split(";")[0].slice(0,2);
     let current = getSquare(res.split(";")[0]);
     let target  = getSquare(res.split(";")[0].slice(2, 4));
+    let counter = 0;
     for (let i = 0; i < allImgs.length; i++) {
       if (allImgs[i].current_moves.length == 0) continue;
       if (allImgs[i].current_moves[0].slice(0,2) == squareName) {
+        console.log("geliyor");
         let left = parseInt(allImgs[i].style.left.slice(0, -2));
         let top  = parseInt(allImgs[i].style.top.slice(0, -2));
-        allImgs[i].addEventListener("transitionend", (e) => {
-          window.fen = res.split(";")[2];
-          BuildBoard();
-        })
         allImgs[i].style.left = (left + ((target % 8) - (current % 8)) * 90) + "px";
         allImgs[i].style.top  = (top + (Math.floor(current / 8) - Math.floor(target / 8)) * 90) + "px";
+        setTimeout(() => {
+          window.fen = res.split(";")[2];
+          buildBoardType();
+        }, 400);
       }
     }
   })
@@ -192,10 +215,11 @@ const makeMove = (move) => {
     window.fen = res;
     BuildBoard();
     if (res.split(" ")[1] === window.chess_engine_color) {
-      setTimeout(makeEngineMove, 150)
+      setTimeout(() => makeEngineMove(BuildBoard), 150)
     };
   })
 }
+
 
 const resetToInitialState = (move) => {
   for (let i = 0; i < targetSquares.length; i++) {
@@ -236,4 +260,4 @@ document.addEventListener('dragstart', function(event) {
   event.preventDefault();
 });
 
-export {BuildBoard, makeEngineMove}
+export {BuildBoard, makeEngineMove, BuildBoardEngineVsEngine}

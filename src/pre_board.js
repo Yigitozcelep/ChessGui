@@ -1,4 +1,4 @@
-import {BuildBoard, makeEngineMove} from "./main.js";
+import {BuildBoard, makeEngineMove, BuildBoardEngineVsEngine} from "./main.js";
 
 const BOARD_CONTAINER = document.getElementById("board_container");
 
@@ -7,10 +7,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
 });
 
 const createMainMenu = () => {
-    console.log("bumbumbumx");
     BOARD_CONTAINER.innerHTML = "";
     window.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    window.prev_fen = "";
     window.chess_engine_color = "";
     document.getElementById("board_div").style.visibility = "hidden";
     let fen_div = document.createElement("div");
@@ -44,7 +42,7 @@ const createMainMenu = () => {
         BOARD_CONTAINER.innerHTML = "";
         BuildBoard();
         if (fen.split(" ")[1] == window.chess_engine_color) {
-            setTimeout(makeEngineMove, 150);
+            setTimeout(() => makeEngineMove(BuildBoard), 150);
         }
     }
 
@@ -60,7 +58,7 @@ const createMainMenu = () => {
         BOARD_CONTAINER.innerHTML = "";
         BuildBoard();
         if (fen.split(" ")[1] == window.chess_engine_color) {
-            setTimeout(makeEngineMove, 150);
+            setTimeout(() => makeEngineMove(BuildBoard), 150);
         }
     }
 
@@ -69,6 +67,14 @@ const createMainMenu = () => {
     button_engine_vs_engine.classList.add("options");
     button_engine_vs_engine.classList.add("manuel_button");
     button_engine_vs_engine.style.left = "70vw"
+
+    button_engine_vs_engine.onclick = () => {
+        window.fen = input.value.trim();
+        window.chess_engine_color = "wb";
+        document.getElementById("board_div").style.visibility = "visible";
+        BOARD_CONTAINER.innerHTML = "";
+        BuildBoardEngineVsEngine();
+    }
 
     BOARD_CONTAINER.appendChild(fen_div);
     BOARD_CONTAINER.appendChild(input)
