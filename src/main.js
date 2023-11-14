@@ -190,7 +190,7 @@ const getMoveOfTargetSquare = (e) => {
 }
 
 const createEvalLabel = (eval_res) => {
-  document.getElementById("eval_res").innerHTML = "Eval: " + (eval_res / 1000).toFixed(2);
+  document.getElementById("eval_res").innerHTML = "Eval: " + (eval_res / 100).toFixed(2);
 }
 
 const makeEngineMove = (buildBoardType) => {

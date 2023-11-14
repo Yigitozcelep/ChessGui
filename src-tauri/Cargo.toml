@@ -21,6 +21,11 @@ persa_chess = {path="/Users/yigitozcelep/Desktop/codes/rust/persa_chess"}
 [profile.dev]
 overflow-checks = false
 
+[profile.release]
+codegen-units = 1
+lto = "fat"
+panic = "abort"
+opt-level = 3
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
