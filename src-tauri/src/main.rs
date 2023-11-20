@@ -5,6 +5,7 @@
 
 use persa_chess;
 
+
 #[tauri::command]
 fn get_moves(fen: String) -> Vec<String>{
     persa_chess::get_moves(fen)
@@ -27,10 +28,11 @@ fn get_king_coor(fen: String) -> String {
 
 #[tauri::command]
 fn get_engine_move(fen: String) -> String {
-    persa_chess::get_best_move(fen, 5)
+    persa_chess::get_best_move(fen, 4)
 }
 
 fn main() {
+    persa_chess::init_all_statics();
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![get_moves, make_move, is_king_attacked, get_king_coor, get_engine_move])
         .run(tauri::generate_context!())
