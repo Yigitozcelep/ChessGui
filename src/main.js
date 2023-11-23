@@ -1,64 +1,82 @@
+'use strict';
+
 const invoke = window.__TAURI__.invoke
 
-const BOARD_CONTAINER = document.getElementById("board_container")
+const BOARD = document.getElementById("board")
 const FILES = ["a","b","c","d","e","f","g","h"]
 
-let isFollowing = false;
-let allImgs = [];
-let currentImg;
-let targetSquares = [];
+const PIECE_WIDTH   = 60;
+const PIECE_HEIGHT  = 60;
+const BOARD_LEFT    = 116;
+const BOARD_TOP     = 106;
+const SQUARE_WIDTH  = 90;
+const SQUARE_HEIGHT = 90;
+const SCREEN_WIDTH  = 950;
+const SCREEN_HEIGHT = 950;
 
-const isNumeric = (value) => {
-  return /^-?\d+$/.test(value);
+const MoveAffectSpeed = "0.3";
+
+const PlayersTypes = {
+  EngineVsEngine     : "Engine Vs Engine",
+  PlayerVsPlayer     : "Player Vs Player",
+  PlayerWhiteVsEngine: "PlayerWhite Vs Engine",
+  PlayerBlackVsEngine: "PlayerBlack Vs Engine",
+  PlayerVsEngine     : "Player Vs Engine",
 }
 
-const CreateItem = (square, type, color, moves) => {
-  let rank = Math.floor(square / 8);
-  let file = square % 8;
-  let piece;
-  if      (type == "k") piece = "black_king"
-  else if (type == "q") piece = "black_queen"
-  else if (type == "n") piece = "black_knight"
-  else if (type == "p") piece = "black_pawn"
-  else if (type == "b") piece = "black_bishop"
-  else if (type == "r") piece = "black_rook"
-  else if (type == "K") piece = "white_king"
-  else if (type == "Q") piece = "white_queen"
-  else if (type == "N") piece = "white_knight"
-  else if (type == "P") piece = "white_pawn"
-  else if (type == "B") piece = "white_bishop"
-  else if (type == "R") piece = "white_rook"
-
-  let file_name = "./svgs/" + piece + ".svg"
-  let img = document.createElement("img");
-  img.src = file_name;
-  img.style.position = "absolute"
-  
-  if (piece[0] === color && !window.chess_engine_color.includes(piece[0])) {img.classList.add("grabbable")}
-  img.classList.add(FILES[file] + rank);
-  img.style.width = "60px";
-  img.style.height = "60px"
-  img.style.left = file * 90 + 100 + 30 + "px";
-  img.style.top  = (8 - rank) * 90  + 30 + "px";
-  img.style.zIndex = "3";
-  if (window.chess_engine_color.includes(piece[0])) img.style.transition = "all 0.3s ease";
-  img.current_left = img.style.left;
-  img.current_top  = img.style.top;
-  img.current_moves = moves;
-  img.addEventListener("click", (e) => {
-    if (!img.classList.contains("grabbing")) return;
-    
-  })
-  allImgs.push(img);
-  BOARD_CONTAINER.appendChild(img);
+const ColorMapping = {
+  "w": "white",
+  "b": "black",
 }
 
-const findCurrentMoves = (moves, rank, file) => {
-  let data = [];
-  for (let i = 0; i < moves.length; i++)  {
-    if (moves[i][0] == FILES[file] && moves[i][1]) {}
-  }
+const letterToPiece = {
+  "k": "black_king",
+  "q": "black_queen",
+  "n": "black_knight",
+  "p": "black_pawn",
+  "b": "black_bishop",
+  "r": "black_rook",
+  "K": "white_king",
+  "Q": "white_queen",
+  "N": "white_knight",
+  "P": "white_pawn",
+  "B": "white_bishop",
+  "R": "white_rook",
 }
+
+
+const BoardState = {
+    "fen": "",
+    "engineMoveSpeed": 0,
+    "playersType": PlayersTypes.PlayerVsPlayer,
+    "oldFens": [],
+
+    createBoard(fen, engineMoveSpeed, playersType) {
+      document.getElementById("board_container").style.visibility = "visible";
+      document.getElementById("menu_container").style.visibility  = "hidden";
+      BOARD.innerHTML = "";
+      this.fen = fen;
+      this.engineMoveSpeed = engineMoveSpeed;
+      this.playersType = playersType;
+      this.oldFens = [fen];
+      buildBoard();
+    },
+
+    getColor() {return ColorMapping[this.fen.split(" ")[1]]},
+    getOtherColor() {return this.getColor() == "white" ? "black" :"white"},
+    getBoardOfFen() {return this.fen.split(" ")[0]},
+    async getMoves() {return await invoke("get_moves", {fen: this.fen})},
+    async isKingAttacked() {return await invoke("is_king_attacked", {fen: this.fen})},
+    async makeMoveAndRebuild(move) {
+      BoardState.fen = await invoke("make_move", {fen: this.fen, mov: move})
+      buildBoard();
+    }
+}
+
+const getFile = (square) => square % 8
+const getRank = (square) => Math.floor(square / 8)
+
+const isNumeric = (value) => /^-?\d+$/.test(value)
 
 const getSquare = (moveString) => {
   let file = moveString.charCodeAt(0) - "a".charCodeAt(0);
@@ -66,204 +84,222 @@ const getSquare = (moveString) => {
   return rank * 8 + file;
 }
 
-const getCurrentMoves = (square, moves) => {
-  let data = [];
-  for (let i = 0; i < moves.length; i++) {
-    if (getSquare(moves[i]) == square) data.push(moves[i]);
-  }
-  return data;
+
+const capitalize = (s) => s && s[0].toUpperCase() + s.slice(1)
+
+const getCurrentMoves = (square, moves) => moves.filter(move => getSquare(move) == square)
+
+const labelTheResult = (result) => {
+  let div = document.createElement("div");
+  div.innerHTML = capitalize(result);
+  div.classList.add("winner_label")
+  BOARD.appendChild(div);
 }
 
-const CreatePieces = (moves) => {
+const getReverseRank  = (square) => 7 - getRank(square)
+const getLeftOfSquare = (square) => getFile(square) * SQUARE_WIDTH  + BOARD_LEFT
+const getTopOfSquare  = (square) => getReverseRank(square) * SQUARE_HEIGHT + BOARD_TOP
+
+const getLeftOfPiece  = (square) => getLeftOfSquare(square) + (SQUARE_WIDTH  - PIECE_WIDTH)  / 2 // centralize the piece
+const getTopOfPiece   = (square) => getTopOfSquare(square)  + (SQUARE_HEIGHT - PIECE_HEIGHT) / 2 // centralize the piece
+
+const isGrabbable = (pieceColor) => {
+  if (BoardState.getColor() != pieceColor) return false;
+  if (BoardState.playersType === PlayersTypes.PlayerVsPlayer) return true;
+  return (pieceColor === "white" && BoardState.playersType == PlayersTypes.PlayerWhiteVsEngine) || (pieceColor == "black" && BoardState.playersType == PlayersTypes.PlayerBlackVsEngine)
+}
+
+const createPieces = (moves) => {
   let square = 56;
-  let currentMoves = [];
-  let color = window.fen.split(" ")[1];
-  let boardString = window.fen.split(" ")[0];
+  let boardString = BoardState.getBoardOfFen();
+
   for (let i = 0; i < boardString.length; i++) {
     if (isNumeric(boardString[i])) { square += parseInt(boardString[i]); }
     else if (boardString[i] == "/") square += -16;
     else {
       let currentMoves = getCurrentMoves(square, moves);
-      CreateItem(square, boardString[i], color, currentMoves);
+      createItem(square, letterToPiece[boardString[i]], currentMoves);
       square += 1;
     }
   }
 }
 
-const labeledKing = () => {
-  invoke("get_king_coor", {fen: window.fen}).then((coor) => {
-    let res = getSquare(coor);
-    let rank = Math.floor(res / 8);
-    let file = res % 8;
-    let under_attacked = document.createElement("div");
-    under_attacked.classList.add("king_under_attacked");
-    under_attacked.style.left = file * 90 + 100 + 16 + "px";
-    under_attacked.style.top = (8 - rank) * 90  + 16 + "px";
-    under_attacked.style.zIndex = "1";
-    BOARD_CONTAINER.appendChild(under_attacked);
-  })
+
+const isEngineTurn = () => {
+  if (BoardState.playersType === PlayersTypes.EngineVsEngine) return true;
+  if (BoardState.playersType === PlayersTypes.PlayerWhiteVsEngine && BoardState.getColor() === "black") return true;
+  if (BoardState.playersType === PlayersTypes.PlayerBlackVsEngine && BoardState.getColor() === "white") return true;
+  return false;
+}
+
+const createItem = (square, piece, moves) => {
+  let rank = Math.floor(square / 8);
+  let file = square % 8;
+  let fileName = "./svgs/" + piece + ".svg"
+  let img = document.createElement("img");
+  let pieceColor = ColorMapping[piece[0]];
+  img.src = fileName;
+  img.classList.add("piece");
+  img.id = (FILES[file] + (rank + 1));
+
+  img.style.left = getLeftOfPiece(square) + "px"; 
+  img.style.top  = getTopOfPiece(square)  + "px"; 
+
+  if (isEngineTurn()) img.style.transition = "all " + BoardState.engineMoveSpeed / 1000 + "s ease"
+  if (isGrabbable(pieceColor)) img.classList.add("grabbable")
+
+  img.pieceName     = piece;
+  img.currentSquare = square;
+  img.currentLeft   = img.style.left;
+  img.currentTop    = img.style.top;
+  img.currentMoves  = moves
+
+  BOARD.appendChild(img);
+}
+
+const labelKing = () => {
+  let king = Array.from(BOARD.childNodes).find((piece => piece.pieceName == (BoardState.getColor() + "_" + "king")));
+  let labelDiv = document.createElement("div");
+  labelDiv.style.left = getLeftOfSquare(king.currentSquare) + "px";
+  labelDiv.style.top  = getTopOfSquare(king.currentSquare) + "px";
+  labelDiv.id = "label_king_square";
+  BOARD.appendChild(labelDiv);
+}
+
+const isGameFnished = (kingAttacked, moves) => kingAttacked && moves.length == 0
+
+const makeEngineMove = async () => {
+  let engineMove = await invoke("get_engine_move", {fen: BoardState.fen});
+  let [move, score, fen] = engineMove.split(";");
+  let currentPiece = document.getElementById(move.slice(0, 2));
+  movePieceAndRebuildBoard(currentPiece, getSquare(move.slice(2, move.length)), move);
+}
+
+const buildBoard = async () => {
+  if (document.getElementById("board_container").style.visibility === "hidden") return;
+  let moves = await BoardState.getMoves();
+  let kingAttacked = await BoardState.isKingAttacked();
   
+  BOARD.innerHTML = "";
+  createPieces(moves, BoardState.fen);
+  if (kingAttacked) labelKing();
+  if (moves.length == 0) {
+    if (kingAttacked) labelTheResult(BoardState.getOtherColor() + " Win")
+    else labelTheResult("Draw")
+  }
+  
+  if (isEngineTurn() && !isGameFnished(kingAttacked, moves)) setTimeout(() => makeEngineMove(), BoardState.engineMoveSpeed);
 }
 
-const labelTheResult = (result) => {
-  let div = document.createElement("div");
-  div.innerHTML = result;
-  div.classList.add("winner_label")
-  BOARD_CONTAINER.appendChild(div);
-}
-
-
-const BuildBoard = ()  => {
-  if (document.getElementById("board_div").style.visibility === "hidden") return;
-  allImgs = [];
-  targetSquares = [];
-  isFollowing = false;
-  invoke("get_moves", {fen: window.fen}).then((moves) => {
-    invoke("is_king_attacked", {fen: window.fen}).then((res) => {
-      BOARD_CONTAINER.innerHTML = "";
-      CreatePieces(moves);
-      if (res) labeledKing()
-      if (moves.length === 0) {
-        if (res) {
-          if   (window.fen.split(" ")[1] == "w") {labelTheResult("Black Win")}
-          else {labelTheResult("White Win")}
-        }
-        else labelTheResult("Draw") 
-      }
-    })
+const findGrabbingPiece = (pieces) => Array.from(pieces).find((piece) => piece.classList.contains("grabbing"));
+const findClickedPiece = (pieces, e) => {
+  return Array.from(pieces).find(piece => {
+    let left = piece.currentLeft.slice(0, -2) - 0; // removing px from end
+    let top  = piece.currentTop.slice(0, -2) - 0;  // same
+    return piece.classList.contains("grabbable") && 
+           left <= e.pageX && e.pageX <= left + PIECE_WIDTH && 
+           top  <= e.pageY && e.pageY <= top  + PIECE_HEIGHT;
   })
 }
 
-const BuildBoardEngineVsEngine = () => {
-  if (document.getElementById("board_div").style.visibility === "hidden") return;
-  allImgs = [];
-  targetSquares = [];
-  isFollowing = false;
-  invoke("get_moves", {fen: window.fen}).then((moves) => {
-    invoke("is_king_attacked", {fen: window.fen}).then((res) => {
-      BOARD_CONTAINER.innerHTML = "";
-      CreatePieces(moves);
-      if (res) labeledKing()
-      if (moves.length === 0) {
-        if (res) {
-          if   (window.fen.split(" ")[1] == "w") {labelTheResult("Black Win")}
-          else {labelTheResult("White Win")}
-        }
-        else labelTheResult("Draw") 
-      }
-      else setTimeout(() => makeEngineMove(BuildBoardEngineVsEngine), 300);
-    })
+const createTargetDivs = (piece) => {
+  piece.currentMoves.forEach((move) => {
+    let targetSquare = getSquare(move.slice(2, move.length));
+    let targetDiv = document.createElement("div");
+    targetDiv.classList.add("target_square");
+    targetDiv.style.left = getLeftOfSquare(targetSquare) + "px";
+    targetDiv.style.top  = getTopOfSquare(targetSquare)  + "px";
+    targetDiv.currentMove = move;
+    targetDiv.currentSquare = getSquare(move.slice(2, targetDiv.currentMove.length));
+
+    BOARD.appendChild(targetDiv);
   })
 }
 
-document.addEventListener("mousemove", (e) => {
-  if (isFollowing) {
-    currentImg.style.top = e.pageY - 30 + "px";
-    currentImg.style.left = e.pageX - 30 + "px";
-  }
-})
+const getTargetDiv = () => Array.from(BOARD.childNodes).filter(el => el.classList.contains("target_square"))
 
-
-const createTargetDiv = (move) => {
-  let target = getSquare(move.slice(2, move.length));
-  let targetDiv = document.createElement("div");
-  targetDiv.move = move;
-  targetDiv.classList.add("target_square");
-  let rank = Math.floor(target / 8);
-  let file = target % 8;
-  targetDiv.style.left = file * 90 + 100 + 16 + "px";
-  targetDiv.style.top = (8 - rank) * 90  + 16 + "px";
-  targetDiv.style.zIndex = "2";
-  targetSquares.push(targetDiv);
-  BOARD_CONTAINER.appendChild(targetDiv);
-}
-
-const getMoveOfTargetSquare = (e) => {
-  for (let i = 0; i < targetSquares.length; i++) {
-    let target = targetSquares[i];
-    let left = target.style.left.slice(0, -2) - 0;
-    let top  = target.style.top.slice(0, -2) - 0;
-    if (left <= e.pageX && e.pageX <= left + 89 && top <= e.pageY && e.pageY <= top + 89) {
-      return target.move;
-    }
-  }
-}
-
-const createEvalLabel = (eval_res) => {
-  document.getElementById("eval_res").innerHTML = "Eval: " + (eval_res / 100).toFixed(2);
-}
-
-const makeEngineMove = (buildBoardType) => {
-  invoke("get_engine_move", {fen: window.fen}).then((res) => {
-    let squareName = res.split(";")[0].slice(0,2);
-    let current = getSquare(res.split(";")[0]);
-    let target  = getSquare(res.split(";")[0].slice(2, 4));
-    let counter = 0;
-    createEvalLabel(res.split(";")[1])
-    for (let i = 0; i < allImgs.length; i++) {
-      if (allImgs[i].current_moves.length == 0) continue;
-      if (allImgs[i].current_moves[0].slice(0,2) == squareName) {
-        let left = parseInt(allImgs[i].style.left.slice(0, -2));
-        let top  = parseInt(allImgs[i].style.top.slice(0, -2));
-        allImgs[i].style.left = (left + ((target % 8) - (current % 8)) * 90) + "px";
-        allImgs[i].style.top  = (top + (Math.floor(current / 8) - Math.floor(target / 8)) * 90) + "px";
-        setTimeout(() => {
-          window.fen = res.split(";")[2];
-          buildBoardType();
-        }, 400);
-      }
-    }
+const getClickedDiv = (e) => {
+  return getTargetDiv().find(square => {
+    let left = square.style.left.slice(0, -2) - 0; // remove px
+    let top  = square.style.top.slice(0, -2) - 0;   // remove px
+    return left <= e.pageX && e.pageX <= left + SQUARE_WIDTH && top <= e.pageY && e.pageY <= top + SQUARE_HEIGHT;
   })
 }
 
-const makeMove = (move) => {
-  invoke("make_move", {fen: window.fen, mov: move}).then((res) => {
-    window.fen = res;
-    BuildBoard();
-    if (res.split(" ")[1] === window.chess_engine_color) {
-      setTimeout(() => makeEngineMove(BuildBoard), 150)
-    };
-  })
+const removeGrabbableFromAllPieces = () => Array.from(BOARD.childNodes).forEach((piece) => piece.classList.remove("grabbable"))
+
+const isMoveCastle = (grabbingPiece, targetSquare) => grabbingPiece.pieceName.includes("king") && Math.abs(getFile(grabbingPiece.currentSquare) - getFile(targetSquare)) >= 2
+const findCastlingRook = (rookSquare) => Array.from(BOARD.childNodes).find(piece => piece.currentSquare === rookSquare)
+const findCastlingRookSquares = (currentMove) => {
+  if (currentMove == "e1g1") return [getSquare("h1"), getSquare("f1")];
+  if (currentMove == "e1c1") return [getSquare("a1"), getSquare("d1")];
+  if (currentMove == "e8g8") return [getSquare("h8"), getSquare("f8")];
+  if (currentMove == "e8c8") return [getSquare("a8"), getSquare("d8")];
 }
 
+const slowlyMoveAffect = (piece, targetSquare) => {
+    piece.style.transition = "all " + MoveAffectSpeed + "s ease";
+    piece.style.left = getLeftOfPiece(targetSquare) + "px";
+    piece.style.top  = getTopOfPiece(targetSquare) + "px";
+}
 
-const resetToInitialState = (move) => {
-  for (let i = 0; i < targetSquares.length; i++) {
-    BOARD_CONTAINER.removeChild(targetSquares[i]);
-  }
-  targetSquares = [];
-  isFollowing = false;
-  if (!move) {
-    currentImg.style.left = currentImg.current_left;
-    currentImg.style.top  = currentImg.current_top;
-    currentImg.classList.remove("grabbing");
-  }
+const slowlyMoveRook = (grabbingPiece, targetDiv) => {
+  let [rookSquare, rookTargetSquare] = findCastlingRookSquares(targetDiv);
+  let rook = findCastlingRook(rookSquare);
+  slowlyMoveAffect(rook, rookTargetSquare);
+}
+
+const movePieceAndRebuildBoard = (grabbingPiece, targetSquare, currentMove) => {
+  slowlyMoveAffect(grabbingPiece, targetSquare);
+  if (isMoveCastle(grabbingPiece, targetSquare)) slowlyMoveRook(grabbingPiece, currentMove)
+  removeGrabbableFromAllPieces();
+  setTimeout(() => BoardState.makeMoveAndRebuild(currentMove), 250);
+}
+
+const resetPiece = (piece) => {
+  piece.style.left = piece.currentLeft; 
+  piece.style.top = piece.currentTop;
+}
+
+const deleteTargetDivs = () => getTargetDiv().forEach(square => BOARD.removeChild(square));
+const deleteKingLabel  = () => {
+  let label = document.getElementById("label_king_square");
+  if (label) BOARD.removeChild(document.getElementById("label_king_square"));
+}
+const handleMakeMoveAction = (grabbingPiece, e) => {
+  grabbingPiece.classList.remove("grabbing");
+  grabbingPiece.classList.add("grabbable");
+  let targetDiv = getClickedDiv(e);
+  deleteTargetDivs();
+  deleteKingLabel();
+  if (targetDiv) movePieceAndRebuildBoard(grabbingPiece, targetDiv.currentSquare, targetDiv.currentMove);
+  else resetPiece(grabbingPiece);
+}
+
+const handlePickPieceAction = (pieces, e) => {
+  let clickedPiece = findClickedPiece(pieces, e);
+  if (!clickedPiece) return;
+  createTargetDivs(clickedPiece);
+  clickedPiece.classList.remove("grabbable");
+  clickedPiece.classList.add("grabbing");
 }
 
 document.addEventListener("click", (e) => {
-  if (isFollowing) {
-    let move = getMoveOfTargetSquare(e)
-    resetToInitialState(move);
-    if (move) makeMove(move);
-    return;
-  }
-  for (let i = 0; i < allImgs.length; i++) {
-    let left = allImgs[i].style.left.slice(0, -2) - 0;
-    let top  = allImgs[i].style.top.slice(0, -2) - 0;
-    if (!allImgs[i].classList.contains("grabbable")) continue;
-    if (left <= e.pageX && e.pageX <= left + 60 && top <= e.pageY && e.pageY <= top + 60) {
-      currentImg = allImgs[i];
-      allImgs[i].classList.add("grabbing");
-      isFollowing = true;
-      for (let j = 0; j < allImgs[i].current_moves.length; j++) {
-        createTargetDiv(allImgs[i].current_moves[j]);
-      }
-    }
+  let pieces = BOARD.childNodes;
+  let grabbingPiece = findGrabbingPiece(pieces);
+  if (grabbingPiece) handleMakeMoveAction(grabbingPiece, e);
+  else handlePickPieceAction(pieces, e)
+})
+
+document.addEventListener('dragstart', (event) => event.preventDefault());
+
+document.addEventListener("mousemove", (e) => {
+  let pieces = BOARD.childNodes;
+  let grabbingPiece = findGrabbingPiece(pieces)
+  if (grabbingPiece) {
+    grabbingPiece.style.left = e.pageX - PIECE_WIDTH  / 2  + "px" // for centralize the piece
+    grabbingPiece.style.top  = e.pageY - PIECE_HEIGHT / 2 + "px" // for centralize the piece
   }
 })
 
-document.addEventListener('dragstart', function(event) {
-  event.preventDefault();
-});
-
-export {BuildBoard, makeEngineMove, BuildBoardEngineVsEngine}
+export {BoardState, PlayersTypes};

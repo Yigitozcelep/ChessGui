@@ -5,14 +5,35 @@
     <link rel="stylesheet" type="text/css" href="./styles.css">
 </head>
 <body>
-  <div id="board_container"> </div>
+    
+  <div id="master">
 
-  <div id="go_back_main_menu" class="manuel_button">Go Back Main Menu</div>
-  <div id="eval_res"></div>
-  <div id="board_div"> 
-      <img src="./svgs/board.svg" id="board_img">
+    <div id="board_container" style="visibility: hidden;">
+      <div id="go_back_main_menu" class="manuel_button">Go Back Main Menu</div>
+      <div id="winner_label"></div>
+      <div id="eval_res"></div>
+      <img id="board_img" src="./svgs/board.svg">
+      <div id="board"></div>
+    </div>
+    
+    <div id="menu_container">
+      <div id="settings"> </div>
+      
+      <div id="fen_label">Fen: </div>
+      <input id="fen_input" class="input_entry" type="text" value="    rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1">
+      <div id="buttons"> 
+        <div id="EngineVsEngine" class="manuel_button build_board_type"> Engine Vs Engine </div>
+        <div id="PlayerVsPlayer" class="manuel_button build_board_type"> Player Vs Player </div>
+        <div id="color_options_of_player">
+          <div id="set_black_player_button" class="manuel_button">Black</div>
+          <div id="set_white_player_button" class="manuel_button color_is_clicked">White</div>
+        </div>
+        <div id="PlayerVsEngine" class="manuel_button build_board_type"> Player Vs Engine </div>
+        <div id="TestEngine"     class="manuel_button build_board_type"> Test Engine </div>
+    </div>
+    </div>
+
   </div>
-
   <script src="./pre_board.js" type="module"></script>
 </body>
 </html>

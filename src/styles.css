@@ -4,93 +4,13 @@ body {
   border: 0;
 }
 
-#board_container{
+#master {
   width: 100vw;
   height: 100vh;
   background-color: rgb(135, 124, 124);
-  display: flex;
-}
-
-#board_div {
-  width: 720px;
-  height: 720px;
-  border: 16px solid;
-  position: absolute;
-  left: 100px;
-  top:  90px;
-}
-
-#board_img {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-}
-
-.grabbable {
-  cursor: grab;
-}
-
-.grabbing {
-  cursor: grabbing;
-}
-
-.target_square {
-  width: 89px;
-  height: 89px;
-  background-color: red;
-  position: absolute;
-  border: 1px solid;
-}
-
-
-.king_under_attacked {
-  width: 89px;
-  height: 89px;
-  background-color: rgb(205, 97, 97);
-  position: absolute;
-  border: 1px solid;
-}
-
-.input_entry {
-  left: 19vw;
-  top: 20vh;
-  width: 65vw;
-  height: 4vh;
-  background-color: rgb(55, 52, 52);
-  font-size: 2vw;
-  color: white;
-  position: absolute;
-}
-
-.fen {
-  width: 4vw;
-  height: 4vh;
-  font-size: 5vw;
-  top: 19.5vh;
-  left: 8vw;
-  position: absolute;
-}
-
-.options {
-  width: 15vw;
-  height: 15vw;
-  top: 35vh;
-  position: absolute;
-  font-size: 3vw;
-}
-
-#go_back_main_menu {
-  width: 200px;
-  height: 50px;
-  font-size: 20px;
-  z-index: 10;
-  left: 5px;
-  top: 5px;
-  position: absolute;
 }
 
 .manuel_button {
-  z-index: 10;
   background-color: rgb(100, 94, 94);
   border-radius: 3px;
   border:1px solid #000000;
@@ -110,22 +30,132 @@ body {
   transform: translateY(4px);
 }
 
-.winner_label {
-  width: 250px;
-  height: 50px;
-  left: 500px;
-  top: 5px;
-  font-size: 40px;
+.input_entry {
+  background-color: rgb(55, 52, 52);
+  font-size: 20px;
+  color: white;
   position: absolute;
-  background-color: rgb(135, 124, 124);
-
 }
 
-#eval_res {
-  width: 250px;
+.build_board_type {
+  width: 237px;
+  height: 143px;
+  position: absolute;
+  font-size: 30px;
+}
+
+#fen_label {
+  width: 40px;
+  height: 40px;
+  font-size: 50px;
+  top: 175px;
+  left: 80px;
+  position: absolute;
+}
+
+#fen_input {
+  left: 180px;
+  top: 185px;
+  width: 630px;
+  height: 38px;
+}
+
+#EngineVsEngine {
+  top: 322px;
+  left: 200px;
+}
+
+#PlayerVsPlayer {
+  top: 322px;
+  left: 500px;
+}
+#PlayerVsEngine {
+  top: 555px;
+  left: 200px;
+}
+
+#TestEngine {
+  top: 555px;
+  left: 500px;
+}
+
+#set_white_player_button {
+  top: 730px;
+  left: 230px;
+  width: 70px;
+  font-size: 19px;
+  height: 30px;
+  position: absolute;
+}
+
+
+#set_black_player_button {
+  top: 730px;
+  left: 320px;
+  width: 70px;
+  font-size: 19px;
+  height: 30px;
+  position: absolute;
+}
+
+.color_is_clicked {
+  background-color: #cdcdcd;
+  box-shadow: 0 5px #666;
+}
+
+
+.piece {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  z-index: 3;
+}
+
+
+#board_img {
+  position: absolute;
+  left: 100px;
+  top:  90px;
+  margin: 0;
+  padding: 0;
+  border: 16px solid;
+}
+
+#go_back_main_menu {
+  position: absolute;
+  width: 180px;
+  height: 40px;
+  top: 10px;
+  left: 10px;
+}
+
+
+.grabbable { cursor: grab; }
+
+.grabbing { cursor: grabbing; }
+
+.target_square {
+  width: 89px;
+  height: 89px;
+  background-color: red;
+  border: 1px solid;
+  position: absolute;
+  z-index: 2;
+}
+
+#label_king_square {
+  width: 89px;
+  height: 89px;
+  background-color: rgb(205, 97, 97);
+  position: absolute;
+  border: 1px solid;
+}
+
+.winner_label {
+  width: 180px;
   height: 50px;
-  left: 250px;
-  top: 5px;
+  left: 500px;
+  top: 10px;
   font-size: 40px;
   position: absolute;
   background-color: rgb(135, 124, 124);
