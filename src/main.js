@@ -172,7 +172,7 @@ const makeEngineMove = async () => {
   let engineMove = await invoke("get_engine_move", {fen: BoardState.fen});
   let [move, score, fen] = engineMove.split(";");
   let currentPiece = document.getElementById(move.slice(0, 2));
-  movePieceAndRebuildBoard(currentPiece, getSquare(move.slice(2, move.length)), move);
+  movePieceAndRebuildBoard(currentPiece, move);
 }
 
 const buildBoard = async () => {
@@ -188,7 +188,7 @@ const buildBoard = async () => {
     else labelTheResult("Draw")
   }
   
-  if (isEngineTurn() && !isGameFnished(kingAttacked, moves)) setTimeout(() => makeEngineMove(), BoardState.engineMoveSpeed);
+  if (isEngineTurn() && !isGameFnished(kingAttacked, moves)) makeEngineMove();
 }
 
 const findGrabbingPiece = (pieces) => Array.from(pieces).find((piece) => piece.classList.contains("grabbing"));
@@ -249,7 +249,10 @@ const slowlyMoveRook = (grabbingPiece, targetDiv) => {
   slowlyMoveAffect(rook, rookTargetSquare);
 }
 
-const movePieceAndRebuildBoard = (grabbingPiece, targetSquare, currentMove) => {
+const movePieceAndRebuildBoard = (grabbingPiece, currentMove) => {
+  deleteTargetDivs();
+  deleteKingLabel();
+  let targetSquare = getSquare(currentMove.slice(2, currentMove.length));
   slowlyMoveAffect(grabbingPiece, targetSquare);
   if (isMoveCastle(grabbingPiece, targetSquare)) slowlyMoveRook(grabbingPiece, currentMove)
   removeGrabbableFromAllPieces();
@@ -270,9 +273,7 @@ const handleMakeMoveAction = (grabbingPiece, e) => {
   grabbingPiece.classList.remove("grabbing");
   grabbingPiece.classList.add("grabbable");
   let targetDiv = getClickedDiv(e);
-  deleteTargetDivs();
-  deleteKingLabel();
-  if (targetDiv) movePieceAndRebuildBoard(grabbingPiece, targetDiv.currentSquare, targetDiv.currentMove);
+  if (targetDiv) movePieceAndRebuildBoard(grabbingPiece, targetDiv.currentMove);
   else resetPiece(grabbingPiece);
 }
 
@@ -297,7 +298,7 @@ document.addEventListener("mousemove", (e) => {
   let pieces = BOARD.childNodes;
   let grabbingPiece = findGrabbingPiece(pieces)
   if (grabbingPiece) {
-    grabbingPiece.style.left = e.pageX - PIECE_WIDTH  / 2  + "px" // for centralize the piece
+    grabbingPiece.style.left = e.pageX - PIECE_WIDTH  / 2 + "px" // for centralize the piece
     grabbingPiece.style.top  = e.pageY - PIECE_HEIGHT / 2 + "px" // for centralize the piece
   }
 })
