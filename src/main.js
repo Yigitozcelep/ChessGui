@@ -145,7 +145,6 @@ const createItem = (square, piece, moves) => {
   img.style.left = getLeftOfPiece(square) + "px"; 
   img.style.top  = getTopOfPiece(square)  + "px"; 
 
-  if (isEngineTurn()) img.style.transition = "all " + BoardState.engineMoveSpeed / 1000 + "s ease"
   if (isGrabbable(pieceColor)) img.classList.add("grabbable")
 
   img.pieceName     = piece;
@@ -216,10 +215,10 @@ const createTargetDivs = (piece) => {
   })
 }
 
-const getTargetDiv = () => Array.from(BOARD.childNodes).filter(el => el.classList.contains("target_square"))
+const getTargetDivs = () => Array.from(BOARD.childNodes).filter(el => el.classList.contains("target_square"))
 
 const getClickedDiv = (e) => {
-  return getTargetDiv().find(square => {
+  return getTargetDivs().find(square => {
     let left = square.style.left.slice(0, -2) - 0; // remove px
     let top  = square.style.top.slice(0, -2) - 0;   // remove px
     return left <= e.pageX && e.pageX <= left + SQUARE_WIDTH && top <= e.pageY && e.pageY <= top + SQUARE_HEIGHT;
@@ -252,19 +251,21 @@ const slowlyMoveRook = (grabbingPiece, targetDiv) => {
 const movePieceAndRebuildBoard = (grabbingPiece, currentMove) => {
   deleteTargetDivs();
   deleteKingLabel();
+  removeGrabbableFromAllPieces();
+  console.log("geliyor")
   let targetSquare = getSquare(currentMove.slice(2, currentMove.length));
   slowlyMoveAffect(grabbingPiece, targetSquare);
   if (isMoveCastle(grabbingPiece, targetSquare)) slowlyMoveRook(grabbingPiece, currentMove)
-  removeGrabbableFromAllPieces();
   setTimeout(() => BoardState.makeMoveAndRebuild(currentMove), 250);
 }
 
 const resetPiece = (piece) => {
   piece.style.left = piece.currentLeft; 
   piece.style.top = piece.currentTop;
+  deleteTargetDivs();
 }
 
-const deleteTargetDivs = () => getTargetDiv().forEach(square => BOARD.removeChild(square));
+const deleteTargetDivs = () => getTargetDivs().forEach(square => BOARD.removeChild(square));
 const deleteKingLabel  = () => {
   let label = document.getElementById("label_king_square");
   if (label) BOARD.removeChild(document.getElementById("label_king_square"));
