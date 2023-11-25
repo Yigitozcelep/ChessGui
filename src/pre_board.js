@@ -14,20 +14,22 @@ document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById("go_back_main_menu").onclick = createMainMenu;
     document.getElementById("set_white_player_button").onclick = () => setColorOption("white")
     document.getElementById("set_black_player_button").onclick = () => setColorOption("black")
-    document.getElementById("PlayerVsPlayer").onclick = () => BoardState.createBoard(getFenFromEntry(), 300, PlayersTypes.PlayerVsPlayer)
+    document.getElementById("PlayerVsPlayer").onclick = () => BoardState.createBoard(getFenFromEntry(), PlayersTypes.PlayerVsPlayer)
     document.getElementById("PlayerVsEngine").onclick = () => {
         let color = getColorOption();
-        if (color == "white") BoardState.createBoard(getFenFromEntry(), 300, PlayersTypes.PlayerWhiteVsEngine)
-        else if (color == "black") BoardState.createBoard(getFenFromEntry(), 300, PlayersTypes.PlayerBlackVsEngine)
+        if (color == "white") BoardState.createBoard(getFenFromEntry(), PlayersTypes.PlayerWhiteVsEngine)
+        else if (color == "black") BoardState.createBoard(getFenFromEntry(), PlayersTypes.PlayerBlackVsEngine)
     }
-    document.getElementById("EngineVsEngine").onclick = () => BoardState.createBoard(getFenFromEntry(), 300, PlayersTypes.EngineVsEngine);
+    document.getElementById("EngineVsEngine").onclick = () => BoardState.createBoard(getFenFromEntry(), PlayersTypes.EngineVsEngine);
 });
 
 const createMainMenu = () => {
     document.getElementById("board").innerHTML = "";
     document.getElementById("board_container").style.visibility = "hidden";
     document.getElementById("menu_container").style.visibility  = "visible";
-    document.getElementById("fen_input").value = "    rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    document.getElementById("fen_input").value = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    document.getElementById("white_time_entry").value = "5.0"
+    document.getElementById("black_time_entry").value = "5.0"
 }
 
 createMainMenu()

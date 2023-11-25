@@ -47,16 +47,14 @@ const letterToPiece = {
 
 const BoardState = {
     "fen": "",
-    "engineMoveSpeed": 0,
     "playersType": PlayersTypes.PlayerVsPlayer,
     "oldFens": [],
 
-    createBoard(fen, engineMoveSpeed, playersType) {
+    createBoard(fen, playersType) {
       document.getElementById("board_container").style.visibility = "visible";
       document.getElementById("menu_container").style.visibility  = "hidden";
       BOARD.innerHTML = "";
       this.fen = fen;
-      this.engineMoveSpeed = engineMoveSpeed;
       this.playersType = playersType;
       this.oldFens = [fen];
       buildBoard();
@@ -84,7 +82,6 @@ const getSquare = (moveString) => {
   return rank * 8 + file;
 }
 
-
 const capitalize = (s) => s && s[0].toUpperCase() + s.slice(1)
 
 const getCurrentMoves = (square, moves) => moves.filter(move => getSquare(move) == square)
@@ -103,11 +100,7 @@ const getTopOfSquare  = (square) => getReverseRank(square) * SQUARE_HEIGHT + BOA
 const getLeftOfPiece  = (square) => getLeftOfSquare(square) + (SQUARE_WIDTH  - PIECE_WIDTH)  / 2 // centralize the piece
 const getTopOfPiece   = (square) => getTopOfSquare(square)  + (SQUARE_HEIGHT - PIECE_HEIGHT) / 2 // centralize the piece
 
-const isGrabbable = (pieceColor) => {
-  if (BoardState.getColor() != pieceColor) return false;
-  if (BoardState.playersType === PlayersTypes.PlayerVsPlayer) return true;
-  return (pieceColor === "white" && BoardState.playersType == PlayersTypes.PlayerWhiteVsEngine) || (pieceColor == "black" && BoardState.playersType == PlayersTypes.PlayerBlackVsEngine)
-}
+const isGrabbable = (pieceColor) => !isEngineTurn() & BoardState.getColor() == pieceColor
 
 const createPieces = (moves) => {
   let square = 56;

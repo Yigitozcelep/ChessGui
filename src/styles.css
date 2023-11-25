@@ -49,12 +49,12 @@ body {
   height: 40px;
   font-size: 50px;
   top: 175px;
-  left: 80px;
+  left: 130px;
   position: absolute;
 }
 
 #fen_input {
-  left: 180px;
+  left: 230px;
   top: 185px;
   width: 630px;
   height: 38px;
@@ -62,26 +62,26 @@ body {
 
 #EngineVsEngine {
   top: 322px;
-  left: 200px;
+  left: 250px;
 }
 
 #PlayerVsPlayer {
   top: 322px;
-  left: 500px;
+  left: 550px;
 }
 #PlayerVsEngine {
   top: 555px;
-  left: 200px;
+  left: 250px;
 }
 
 #TestEngine {
   top: 555px;
-  left: 500px;
+  left: 550px;
 }
 
 #set_white_player_button {
   top: 730px;
-  left: 230px;
+  left: 280px;
   width: 70px;
   font-size: 19px;
   height: 30px;
@@ -91,7 +91,7 @@ body {
 
 #set_black_player_button {
   top: 730px;
-  left: 320px;
+  left: 370px;
   width: 70px;
   font-size: 19px;
   height: 30px;
@@ -159,4 +159,43 @@ body {
   font-size: 40px;
   position: absolute;
   background-color: rgb(135, 124, 124);
+}
+
+
+.time_label {
+  width: 110px;
+  height: 20px;
+  font-size: 20px;
+  position: absolute;
+}
+
+#white_time_label {
+  left: 320px;
+  top: 260px;
+}
+
+#black_time_label {
+  left: 510px;
+  top: 260px;
+}
+
+
+#white_time_entry {
+  left: 430px;
+  top: 260px;
+}
+
+#black_time_entry {
+  left: 620px;
+  top: 260px;
+}
+
+.time_entry {
+  text-align: center;
+  width: 50px;
+  height: 20px;
+  position: absolute;
+  background-color: rgb(55, 52, 52);
+  font-size: 20px;
+  color: white;
 }

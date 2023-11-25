@@ -38,7 +38,7 @@
         "fullscreen": false,
         "resizable": true,
         "title": "chess_gui",
-        "width": 950,
+        "width": 1050,
         "height": 950
       }
     ]
