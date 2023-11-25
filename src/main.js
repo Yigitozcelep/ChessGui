@@ -5,16 +5,14 @@ const invoke = window.__TAURI__.invoke
 const BOARD = document.getElementById("board")
 const FILES = ["a","b","c","d","e","f","g","h"]
 
-const PIECE_WIDTH   = 60;
-const PIECE_HEIGHT  = 60;
-const BOARD_LEFT    = 116;
-const BOARD_TOP     = 106;
-const SQUARE_WIDTH  = 90;
-const SQUARE_HEIGHT = 90;
-const SCREEN_WIDTH  = 950;
-const SCREEN_HEIGHT = 950;
+const PIECE_WIDTH   = 6;
+const PIECE_HEIGHT  = 6;
+const BOARD_LEFT    = 11;
+const BOARD_TOP     = 8;
+const SQUARE_WIDTH  = 9;
+const SQUARE_HEIGHT = 9;
 
-const MoveAffectSpeed = "0.3";
+const MoveAffectSpeed = 250;
 
 const PlayersTypes = {
   EngineVsEngine     : "Engine Vs Engine",
@@ -135,8 +133,8 @@ const createItem = (square, piece, moves) => {
   img.classList.add("piece");
   img.id = (FILES[file] + (rank + 1));
 
-  img.style.left = getLeftOfPiece(square) + "px"; 
-  img.style.top  = getTopOfPiece(square)  + "px"; 
+  img.style.left = getLeftOfPiece(square) + "vw"; 
+  img.style.top  = getTopOfPiece(square)  + "vw"; 
 
   if (isGrabbable(pieceColor)) img.classList.add("grabbable")
 
@@ -152,8 +150,8 @@ const createItem = (square, piece, moves) => {
 const labelKing = () => {
   let king = Array.from(BOARD.childNodes).find((piece => piece.pieceName == (BoardState.getColor() + "_" + "king")));
   let labelDiv = document.createElement("div");
-  labelDiv.style.left = getLeftOfSquare(king.currentSquare) + "px";
-  labelDiv.style.top  = getTopOfSquare(king.currentSquare) + "px";
+  labelDiv.style.left = getLeftOfSquare(king.currentSquare) + "vw";
+  labelDiv.style.top  = getTopOfSquare(king.currentSquare) + "vw";
   labelDiv.id = "label_king_square";
   BOARD.appendChild(labelDiv);
 }
@@ -183,14 +181,19 @@ const buildBoard = async () => {
   if (isEngineTurn() && !isGameFnished(kingAttacked, moves)) makeEngineMove();
 }
 
+const pxToVw = (px) => (px / window.innerWidth) * 100
+
+
 const findGrabbingPiece = (pieces) => Array.from(pieces).find((piece) => piece.classList.contains("grabbing"));
 const findClickedPiece = (pieces, e) => {
   return Array.from(pieces).find(piece => {
-    let left = piece.currentLeft.slice(0, -2) - 0; // removing px from end
+    let left = piece.currentLeft.slice(0, -2) - 0; // removing vw from end
     let top  = piece.currentTop.slice(0, -2) - 0;  // same
+    let pageX = pxToVw(e.pageX);
+    let pageY = pxToVw(e.pageY);
     return piece.classList.contains("grabbable") && 
-           left <= e.pageX && e.pageX <= left + PIECE_WIDTH && 
-           top  <= e.pageY && e.pageY <= top  + PIECE_HEIGHT;
+           left <= pageX && pageX <= left + PIECE_WIDTH && 
+           top  <= pageY && pageY <= top  + PIECE_HEIGHT;
   })
 }
 
@@ -199,8 +202,8 @@ const createTargetDivs = (piece) => {
     let targetSquare = getSquare(move.slice(2, move.length));
     let targetDiv = document.createElement("div");
     targetDiv.classList.add("target_square");
-    targetDiv.style.left = getLeftOfSquare(targetSquare) + "px";
-    targetDiv.style.top  = getTopOfSquare(targetSquare)  + "px";
+    targetDiv.style.left = getLeftOfSquare(targetSquare) + "vw";
+    targetDiv.style.top  = getTopOfSquare(targetSquare)  + "vw";
     targetDiv.currentMove = move;
     targetDiv.currentSquare = getSquare(move.slice(2, targetDiv.currentMove.length));
 
@@ -210,11 +213,16 @@ const createTargetDivs = (piece) => {
 
 const getTargetDivs = () => Array.from(BOARD.childNodes).filter(el => el.classList.contains("target_square"))
 
+
+
+
 const getClickedDiv = (e) => {
   return getTargetDivs().find(square => {
-    let left = square.style.left.slice(0, -2) - 0; // remove px
-    let top  = square.style.top.slice(0, -2) - 0;   // remove px
-    return left <= e.pageX && e.pageX <= left + SQUARE_WIDTH && top <= e.pageY && e.pageY <= top + SQUARE_HEIGHT;
+    let left = square.style.left.slice(0, -2) - 0; // remove vw
+    let top  = square.style.top.slice(0, -2) - 0;   // remove vw
+    let pageX = pxToVw(e.pageX);
+    let pageY = pxToVw(e.pageY);
+    return left <= pageX && pageX <= left + SQUARE_WIDTH && top <= pageY && pageY <= top + SQUARE_HEIGHT;
   })
 }
 
@@ -230,9 +238,9 @@ const findCastlingRookSquares = (currentMove) => {
 }
 
 const slowlyMoveAffect = (piece, targetSquare) => {
-    piece.style.transition = "all " + MoveAffectSpeed + "s ease";
-    piece.style.left = getLeftOfPiece(targetSquare) + "px";
-    piece.style.top  = getTopOfPiece(targetSquare) + "px";
+    piece.style.transition = "all " + MoveAffectSpeed / 1000 + "s ease";
+    piece.style.left = getLeftOfPiece(targetSquare) + "vw";
+    piece.style.top  = getTopOfPiece(targetSquare) + "vw";
 }
 
 const slowlyMoveRook = (grabbingPiece, targetDiv) => {
@@ -245,11 +253,10 @@ const movePieceAndRebuildBoard = (grabbingPiece, currentMove) => {
   deleteTargetDivs();
   deleteKingLabel();
   removeGrabbableFromAllPieces();
-  console.log("geliyor")
   let targetSquare = getSquare(currentMove.slice(2, currentMove.length));
   slowlyMoveAffect(grabbingPiece, targetSquare);
   if (isMoveCastle(grabbingPiece, targetSquare)) slowlyMoveRook(grabbingPiece, currentMove)
-  setTimeout(() => BoardState.makeMoveAndRebuild(currentMove), 250);
+  setTimeout(() => BoardState.makeMoveAndRebuild(currentMove), MoveAffectSpeed);
 }
 
 const resetPiece = (piece) => {
@@ -291,9 +298,11 @@ document.addEventListener('dragstart', (event) => event.preventDefault());
 document.addEventListener("mousemove", (e) => {
   let pieces = BOARD.childNodes;
   let grabbingPiece = findGrabbingPiece(pieces)
+  let pageX = pxToVw(e.pageX);
+  let pageY = pxToVw(e.pageY);
   if (grabbingPiece) {
-    grabbingPiece.style.left = e.pageX - PIECE_WIDTH  / 2 + "px" // for centralize the piece
-    grabbingPiece.style.top  = e.pageY - PIECE_HEIGHT / 2 + "px" // for centralize the piece
+    grabbingPiece.style.left = pageX - PIECE_WIDTH  / 2 + "vw" // for centralize the piece
+    grabbingPiece.style.top  = pageY - PIECE_HEIGHT / 2 + "vw" // for centralize the piece
   }
 })
 

@@ -32,69 +32,70 @@ body {
 
 .input_entry {
   background-color: rgb(55, 52, 52);
-  font-size: 20px;
+  font-size: 2vw;
   color: white;
   position: absolute;
+  text-align: center;
 }
 
 .build_board_type {
-  width: 237px;
-  height: 143px;
+  width: 24vw;
+  height: 15vw;
   position: absolute;
-  font-size: 30px;
+  font-size: 3vw;
 }
 
 #fen_label {
-  width: 40px;
-  height: 40px;
-  font-size: 50px;
-  top: 175px;
-  left: 130px;
+  width: 4vw;
+  height: 4vw;
+  font-size: 5vw;
+  top: 17vw;
+  left: 12.5vw;
   position: absolute;
 }
 
 #fen_input {
-  left: 230px;
-  top: 185px;
-  width: 630px;
-  height: 38px;
+  left: 23vw;
+  top: 18vw;
+  width: 63vw;
+  height: 4vw;
 }
 
 #EngineVsEngine {
-  top: 322px;
-  left: 250px;
+  top: 32vw;
+  left: 25vw;
 }
 
 #PlayerVsPlayer {
-  top: 322px;
-  left: 550px;
+  top: 32vw;
+  left: 55vw;
 }
 #PlayerVsEngine {
-  top: 555px;
-  left: 250px;
+  top: 55vw;
+  left: 25vw;
 }
 
 #TestEngine {
-  top: 555px;
-  left: 550px;
+  top: 55vw;
+  left: 55vw;
 }
 
 #set_white_player_button {
-  top: 730px;
-  left: 280px;
-  width: 70px;
-  font-size: 19px;
-  height: 30px;
+  top: 72vw;
+  left: 28vw;
+  width: 7vw;
+  font-size: 2vw;
+  height: 3vw;
   position: absolute;
 }
 
 
 #set_black_player_button {
-  top: 730px;
-  left: 370px;
-  width: 70px;
-  font-size: 19px;
-  height: 30px;
+  top: 72vw;
+  left: 37vw;
+  width: 7vw;
+  font-size: 2vw;
+  height: 3vw;
   position: absolute;
 }
 
@@ -106,27 +107,30 @@ body {
 
 .piece {
   position: absolute;
-  width: 60px;
-  height: 60px;
+  width: 6vw;
+  height: 6vw;
   z-index: 3;
 }
 
 
 #board_img {
   position: absolute;
-  left: 100px;
-  top:  90px;
+  left: 10vw;
+  top:  7vw;
+  width: 72vw;
+  height: 72vw;
   margin: 0;
   padding: 0;
-  border: 16px solid;
+  border: 1vw solid;
 }
 
 #go_back_main_menu {
   position: absolute;
-  width: 180px;
-  height: 40px;
-  top: 10px;
-  left: 10px;
+  width: 18vw;
+  height: 4vw;
+  font-size: 2vw;
+  top: 1vw;
+  left: 1vw;
 }
 
 
@@ -135,67 +139,67 @@ body {
 .grabbing { cursor: grabbing; }
 
 .target_square {
-  width: 89px;
-  height: 89px;
+  width: 9vw;
+  height: 9vw;
   background-color: red;
-  border: 1px solid;
+  border: 0.1vw solid;
   position: absolute;
   z-index: 2;
 }
 
 #label_king_square {
-  width: 89px;
-  height: 89px;
+  width: 9vw;
+  height: 9vw;
   background-color: rgb(205, 97, 97);
   position: absolute;
   border: 1px solid;
 }
 
 .winner_label {
-  width: 180px;
-  height: 50px;
-  left: 500px;
-  top: 10px;
-  font-size: 40px;
+  width: 18vw;
+  height: 5vw;
+  left: 50vw;
+  top: 1vw;
+  font-size: 4vw;
   position: absolute;
   background-color: rgb(135, 124, 124);
 }
 
 
 .time_label {
-  width: 110px;
-  height: 20px;
-  font-size: 20px;
+  width: 11vw;
+  height: 2vw;
+  font-size: 2vw;
   position: absolute;
 }
 
 #white_time_label {
-  left: 320px;
-  top: 260px;
+  left: 32vw;
+  top: 26vw;
 }
 
 #black_time_label {
-  left: 510px;
-  top: 260px;
+  left: 51vw;
+  top: 26vw;
 }
 
 
 #white_time_entry {
-  left: 430px;
-  top: 260px;
+  left: 43vw;
+  top: 26vw;
 }
 
 #black_time_entry {
-  left: 620px;
-  top: 260px;
+  left: 62vw;
+  top: 26vw;
 }
 
 .time_entry {
   text-align: center;
-  width: 50px;
-  height: 20px;
+  width: 5vw;
+  height: 2vw;
   position: absolute;
   background-color: rgb(55, 52, 52);
-  font-size: 20px;
+  font-size: 2vw;
   color: white;
 }

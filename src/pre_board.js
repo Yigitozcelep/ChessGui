@@ -1,5 +1,7 @@
 import { BoardState, PlayersTypes } from "./main.js";
 
+
+
 const setColorOption = (color) => {
     document.getElementById("set_black_player_button").classList.remove("color_is_clicked")
     document.getElementById("set_white_player_button").classList.remove("color_is_clicked")
