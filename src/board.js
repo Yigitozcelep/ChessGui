@@ -51,7 +51,6 @@ const stringMinuteToMilliSecond = (input) => {
 }
 
 const BoardState = {
-    "_fen": "",
     "_playersType": PlayersTypes.PlayerVsPlayer,
     "_oldFens": [],
     "_whiteTimePlus": 0, // TODO bunlari ekle
@@ -61,28 +60,30 @@ const BoardState = {
       document.getElementById("board_container").style.visibility = "visible";
       document.getElementById("menu_container").style.visibility  = "hidden";
       BOARD.innerHTML = "";
-      this._fen = fen;
       this._playersType = playersType;
       this._oldFens = [fen];
       this._oldTimes = [[[stringMinuteToMilliSecond(whiteTime), stringMinuteToMilliSecond(blackTime)]]]; // every array contains current round times
-      console.log(whiteTime, blackTime);
       makeVisibleTimeSvgs();
       buildBoard();
     },
 
-    saveCurrentTimes(white, black)   {  this._oldTimes.at(-1).push([white, black])                            },
-    getColor()                       {  return ColorMapping[this._fen.split(" ")[1]]                          },
-    getOtherColor()                  {  return this.getColor() == "white" ? "black" :"white"                  },
-    getBoardOfFen()                  {  return this._fen.split(" ")[0]                                        },
-    getCurrentTimes()                {  return this._oldTimes.at(-1).at(-1);                                  },
-    isTimeLeft()                     {  return this.getCurrentTimes()[0] > 0 && this.getCurrentTimes()[1] > 0 },
-    async getMoves()                 {  return await invoke("get_moves", {fen: this._fen})                    },
-    async isKingAttacked()           {  return await invoke("is_king_attacked", {fen: this._fen})             },
-    async getEngineMove()            {  return await invoke("get_engine_move", {fen: this._fen})              },
+    saveCurrentTimes(white, black)   {  this._oldTimes.at(-1).push([white, black])                               },
+    saveNewFen(fen)                  {  this._oldFens.push(fen)                                                  },
+    getCurFen()                      {  return this._oldFens.at(-1)                                              },
+    getColor()                       {  return ColorMapping[this.getCurFen().split(" ")[1]]                      },
+    getOtherColor()                  {  return this.getColor() == "white" ? "black" :"white"                     },
+    getBoardOfFen()                  {  return this.getCurFen().split(" ")[0]                                    },
+    getCurrentTimes()                {  return this._oldTimes.at(-1).at(-1);                                     },
+    isTimeLeft()                     {  return this.getCurrentTimes()[0] > 0 && this.getCurrentTimes()[1] > 0    },
+    async getMoves()                 {  return await invoke("get_moves",        {fen: this.getCurFen()})         },
+    async isKingAttacked()           {  return await invoke("is_king_attacked", {fen: this.getCurFen()})         },
+    async getEngineMove()            {  return await invoke("get_engine_move",  {fen: this.getCurFen()})         },
     async makeMoveAndRebuild(move) {
-      BoardState._fen = await invoke("make_move", {fen: this._fen, mov: move})
+      let newFen = await invoke("make_move", {fen: this.getCurFen(), mov: move})
+      this.saveNewFen(newFen);
       buildBoard();
     },
+
     getTimeFigureNames() {
       if (this._playersType === PlayersTypes.EngineVsEngine)      return [  "robot"  ,  "robot"  ]
       if (this._playersType === PlayersTypes.PlayerWhiteVsEngine) return [  "player" ,  "robot"  ]
@@ -123,7 +124,6 @@ const updateTimePart = (oldColor) => {
     return;
   }
   let [whiteTime, blackTime] = BoardState.getCurrentTimes();
-  console.log(whiteTime, blackTime)
   if (BoardState.getColor() == "white") whiteTime = whiteTime - UpdateTimeInterval;
   if (BoardState.getColor() == "black") blackTime = blackTime - UpdateTimeInterval;
   
@@ -183,6 +183,7 @@ const createItem = (square, piece, moves) => {
   let rank = Math.floor(square / 8);
   let file = square % 8;
   let fileName = "./svgs/" + piece + ".svg"
+  
   let img = document.createElement("img");
   let pieceColor = ColorMapping[piece[0]];
   img.src = fileName;
@@ -317,6 +318,7 @@ const movePieceAndRebuildBoard = (grabbingPiece, currentMove) => {
 const resetPiece = (piece) => {
   piece.style.left = piece.currentLeft; 
   piece.style.top = piece.currentTop;
+  piece.style.zIndex = "3";
   deleteTargetDivs();
 }
 
@@ -335,7 +337,6 @@ const deleteKingLabel  = () => {
 const handleMakeMoveAction = (grabbingPiece, e) => {
   grabbingPiece.classList.remove("grabbing");
   grabbingPiece.classList.add("grabbable");
-  grabbingPiece.style.zIndex = "3";
   let targetDiv = getClickedDiv(e);
   if (targetDiv) movePieceAndRebuildBoard(grabbingPiece, targetDiv.currentMove);
   else resetPiece(grabbingPiece);
