@@ -7,8 +7,8 @@ const FILES = ["a","b","c","d","e","f","g","h"]
 
 const PIECE_WIDTH   = 6;
 const PIECE_HEIGHT  = 6;
-const BOARD_LEFT    = 11;
-const BOARD_TOP     = 8;
+const BOARD_LEFT    = 10;
+const BOARD_TOP     = 7;
 const SQUARE_WIDTH  = 9;
 const SQUARE_HEIGHT = 9;
 
@@ -19,7 +19,6 @@ const PlayersTypes = {
   PlayerVsPlayer     : "Player Vs Player",
   PlayerWhiteVsEngine: "PlayerWhite Vs Engine",
   PlayerBlackVsEngine: "PlayerBlack Vs Engine",
-  PlayerVsEngine     : "Player Vs Engine",
 }
 
 const ColorMapping = {
@@ -44,29 +43,46 @@ const letterToPiece = {
 
 
 const BoardState = {
-    "fen": "",
-    "playersType": PlayersTypes.PlayerVsPlayer,
-    "oldFens": [],
+    "_fen": "",
+    "_playersType": PlayersTypes.PlayerVsPlayer,
+    "_oldFens": [],
 
     createBoard(fen, playersType) {
       document.getElementById("board_container").style.visibility = "visible";
       document.getElementById("menu_container").style.visibility  = "hidden";
       BOARD.innerHTML = "";
-      this.fen = fen;
-      this.playersType = playersType;
-      this.oldFens = [fen];
+      this._fen = fen;
+      this._playersType = playersType;
+      this._oldFens = [fen];
       buildBoard();
     },
 
-    getColor() {return ColorMapping[this.fen.split(" ")[1]]},
+    getColor() {return ColorMapping[this._fen.split(" ")[1]]},
     getOtherColor() {return this.getColor() == "white" ? "black" :"white"},
-    getBoardOfFen() {return this.fen.split(" ")[0]},
-    async getMoves() {return await invoke("get_moves", {fen: this.fen})},
-    async isKingAttacked() {return await invoke("is_king_attacked", {fen: this.fen})},
+    getBoardOfFen() {return this._fen.split(" ")[0]},
+    async getMoves() {return await invoke("get_moves", {fen: this._fen})},
+    async isKingAttacked() {return await invoke("is_king_attacked", {fen: this._fen})},
+    async getEngineMove() {return await invoke("get_engine_move", {fen: this._fen})},
     async makeMoveAndRebuild(move) {
-      BoardState.fen = await invoke("make_move", {fen: this.fen, mov: move})
+      BoardState._fen = await invoke("make_move", {fen: this._fen, mov: move})
       buildBoard();
-    }
+    },
+    getTimeFigureSvgs(playerType) {
+      if (this._playersType === PlayersTypes.EngineVsEngine)      return [ "./svgs/robot.svg",   "./svgs/robot.svg"  ]
+      if (this._playersType === PlayersTypes.PlayerWhiteVsEngine) return [ "./svgs/player.svg",  "./svgs/robot.svg"  ]
+      if (this._playersType === PlayersTypes.PlayerBlackVsEngine) return [ "./svgs/robot.svg",   "./svgs/player.svg" ]
+      if (this._playersType === PlayersTypes.PlayerVsPlayer)      return [ "./svgs/player.svg",  "./svgs/player.svg" ]
+    },
+    isEngineTurn(){
+      if (this._playersType === PlayersTypes.EngineVsEngine) return true;
+      if (this._playersType === PlayersTypes.PlayerWhiteVsEngine && this.getColor() === "black") return true;
+      if (this._playersType === PlayersTypes.PlayerBlackVsEngine && this.getColor() === "white") return true;
+      return false;
+    },
+}
+
+const createTimePart = () => {
+  
 }
 
 const getFile = (square) => square % 8
@@ -98,7 +114,7 @@ const getTopOfSquare  = (square) => getReverseRank(square) * SQUARE_HEIGHT + BOA
 const getLeftOfPiece  = (square) => getLeftOfSquare(square) + (SQUARE_WIDTH  - PIECE_WIDTH)  / 2 // centralize the piece
 const getTopOfPiece   = (square) => getTopOfSquare(square)  + (SQUARE_HEIGHT - PIECE_HEIGHT) / 2 // centralize the piece
 
-const isGrabbable = (pieceColor) => !isEngineTurn() & BoardState.getColor() == pieceColor
+const isGrabbable = (pieceColor) => !BoardState.isEngineTurn() & BoardState.getColor() == pieceColor
 
 const createPieces = (moves) => {
   let square = 56;
@@ -113,14 +129,6 @@ const createPieces = (moves) => {
       square += 1;
     }
   }
-}
-
-
-const isEngineTurn = () => {
-  if (BoardState.playersType === PlayersTypes.EngineVsEngine) return true;
-  if (BoardState.playersType === PlayersTypes.PlayerWhiteVsEngine && BoardState.getColor() === "black") return true;
-  if (BoardState.playersType === PlayersTypes.PlayerBlackVsEngine && BoardState.getColor() === "white") return true;
-  return false;
 }
 
 const createItem = (square, piece, moves) => {
@@ -159,7 +167,7 @@ const labelKing = () => {
 const isGameFnished = (kingAttacked, moves) => kingAttacked && moves.length == 0
 
 const makeEngineMove = async () => {
-  let engineMove = await invoke("get_engine_move", {fen: BoardState.fen});
+  let engineMove = await BoardState.getEngineMove();
   let [move, score, fen] = engineMove.split(";");
   let currentPiece = document.getElementById(move.slice(0, 2));
   movePieceAndRebuildBoard(currentPiece, move);
@@ -171,18 +179,17 @@ const buildBoard = async () => {
   let kingAttacked = await BoardState.isKingAttacked();
   
   BOARD.innerHTML = "";
-  createPieces(moves, BoardState.fen);
+  createPieces(moves);
   if (kingAttacked) labelKing();
   if (moves.length == 0) {
     if (kingAttacked) labelTheResult(BoardState.getOtherColor() + " Win")
     else labelTheResult("Draw")
   }
   
-  if (isEngineTurn() && !isGameFnished(kingAttacked, moves)) makeEngineMove();
+  if (BoardState.isEngineTurn() && !isGameFnished(kingAttacked, moves)) makeEngineMove();
 }
 
 const pxToVw = (px) => (px / window.innerWidth) * 100
-
 
 const findGrabbingPiece = (pieces) => Array.from(pieces).find((piece) => piece.classList.contains("grabbing"));
 const findClickedPiece = (pieces, e) => {
@@ -212,9 +219,6 @@ const createTargetDivs = (piece) => {
 }
 
 const getTargetDivs = () => Array.from(BOARD.childNodes).filter(el => el.classList.contains("target_square"))
-
-
-
 
 const getClickedDiv = (e) => {
   return getTargetDivs().find(square => {
@@ -265,6 +269,13 @@ const resetPiece = (piece) => {
   deleteTargetDivs();
 }
 
+const setPieceCenterOfTheMouse = (piece, e) => {
+  let pageX = pxToVw(e.pageX);
+  let pageY = pxToVw(e.pageY);
+  piece.style.left = pageX - PIECE_WIDTH  / 2 + "vw" // for centralize the piece
+  piece.style.top  = pageY - PIECE_HEIGHT / 2 + "vw" // for centralize the piece
+}
+
 const deleteTargetDivs = () => getTargetDivs().forEach(square => BOARD.removeChild(square));
 const deleteKingLabel  = () => {
   let label = document.getElementById("label_king_square");
@@ -284,7 +295,9 @@ const handlePickPieceAction = (pieces, e) => {
   createTargetDivs(clickedPiece);
   clickedPiece.classList.remove("grabbable");
   clickedPiece.classList.add("grabbing");
+  setPieceCenterOfTheMouse(clickedPiece, e);
 }
+
 
 document.addEventListener("click", (e) => {
   let pieces = BOARD.childNodes;
@@ -296,14 +309,8 @@ document.addEventListener("click", (e) => {
 document.addEventListener('dragstart', (event) => event.preventDefault());
 
 document.addEventListener("mousemove", (e) => {
-  let pieces = BOARD.childNodes;
-  let grabbingPiece = findGrabbingPiece(pieces)
-  let pageX = pxToVw(e.pageX);
-  let pageY = pxToVw(e.pageY);
-  if (grabbingPiece) {
-    grabbingPiece.style.left = pageX - PIECE_WIDTH  / 2 + "vw" // for centralize the piece
-    grabbingPiece.style.top  = pageY - PIECE_HEIGHT / 2 + "vw" // for centralize the piece
-  }
+  let grabbingPiece = findGrabbingPiece(BOARD.childNodes);
+  if (grabbingPiece) setPieceCenterOfTheMouse(grabbingPiece, e); 
 })
 
 export {BoardState, PlayersTypes};

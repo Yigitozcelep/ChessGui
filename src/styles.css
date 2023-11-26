@@ -121,7 +121,7 @@ body {
   height: 72vw;
   margin: 0;
   padding: 0;
-  border: 1vw solid;
+  outline: 1vw solid;
 }
 
 #go_back_main_menu {
@@ -139,20 +139,20 @@ body {
 .grabbing { cursor: grabbing; }
 
 .target_square {
-  width: 9vw;
-  height: 9vw;
+  width: 8.94vw;
+  height: 8.94vw;
   background-color: red;
-  border: 0.1vw solid;
+  border: 0.15vw solid;
   position: absolute;
   z-index: 2;
 }
 
 #label_king_square {
-  width: 9vw;
-  height: 9vw;
+  width: 8.94vw;
+  height: 8.94vw;
   background-color: rgb(205, 97, 97);
   position: absolute;
-  border: 1px solid;
+  border: 0.15vw solid;
 }
 
 .winner_label {
@@ -202,4 +202,19 @@ body {
   background-color: rgb(55, 52, 52);
   font-size: 2vw;
   color: white;
+}
+
+
+.white_time_svg {
+  left: 90vw;
+  top: 10vw;
+  width: 5vw;
+  height: 5vw;
+}
+
+.black_time_svg {
+  left: 90vw;
+  top: 30vw;
+  width: 5vw;
+  height: 5vw;
 }

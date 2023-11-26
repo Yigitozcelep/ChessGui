@@ -1,5 +1,4 @@
-import { BoardState, PlayersTypes } from "./main.js";
-
+import { BoardState, PlayersTypes } from "./board.js";
 
 
 const setColorOption = (color) => {
@@ -32,6 +31,11 @@ const createMainMenu = () => {
     document.getElementById("fen_input").value = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     document.getElementById("white_time_entry").value = "5.0"
     document.getElementById("black_time_entry").value = "5.0"
+
+    document.getElementById("white_robot_time_svg").style.visibility = "hidden";
+    document.getElementById("black_robot_time_svg").style.visibility = "hidden";
+    document.getElementById("white_person_time_svg").style.visibility = "hidden";
+    document.getElementById("black_person_time_svg").style.visibility = "hidden";
 }
 
 createMainMenu()
