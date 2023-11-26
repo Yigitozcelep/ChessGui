@@ -14,7 +14,7 @@ const SQUARE_HEIGHT = 9;
 
 const MoveAffectSpeed = 250;
 const UpdateTimeInterval = 200;
-const MilliSecond = 3600;
+const MilliSecond = 60000;
 
 const PlayersTypes = {
   EngineVsEngine     : "Engine Vs Engine",
@@ -50,7 +50,6 @@ const BoardState = {
     "_oldFens": [],
     "_white_time": 0,
     "_white_time_plus": 0,
-    "_black_time": 0,
     "_black_time_plus": 0,
     "_oldTimes": [0, 0],
     createBoard(fen, playersType, white_time, black_time) {
@@ -60,46 +59,30 @@ const BoardState = {
       this._fen = fen;
       this._playersType = playersType;
       this._oldFens = [fen];
-      this._oldTimes = [white_time, black_time];
-      this._white_time = white_time;
-      this._black_time = black_time;
-      this.makeVisibleTimeSvgs();
+      this._white_time = parseFloat(white_time) * MilliSecond;
+      this._black_time = parseFloat(black_time) * MilliSecond;
+      this._oldTimes = [[this._white_time, this._black_time]];
+      makeVisibleTimeSvgs();
       buildBoard();
     },
-    
-    getColor() {return ColorMapping[this._fen.split(" ")[1]]},
-    getOtherColor() {return this.getColor() == "white" ? "black" :"white"},
-    getBoardOfFen() {return this._fen.split(" ")[0]},
-    async getMoves() {return await invoke("get_moves", {fen: this._fen})},
-    async isKingAttacked() {return await invoke("is_king_attacked", {fen: this._fen})},
-    async getEngineMove() {return await invoke("get_engine_move", {fen: this._fen})},
+
+    saveCurrentTimes(white, black)   {  this._oldTimes.push([white, black])                        },
+    getColor()                       {  return ColorMapping[this._fen.split(" ")[1]]               },
+    getOtherColor()                  {  return this.getColor() == "white" ? "black" :"white"       },
+    getBoardOfFen()                  {  return this._fen.split(" ")[0]                             },
+    getCurrentTimes()                {  return this._oldTimes[this._oldTimes.length -1];           },
+    async getMoves()                 {  return await invoke("get_moves", {fen: this._fen})         },
+    async isKingAttacked()           {  return await invoke("is_king_attacked", {fen: this._fen})  },
+    async getEngineMove()            {  return await invoke("get_engine_move", {fen: this._fen})   },
     async makeMoveAndRebuild(move) {
       BoardState._fen = await invoke("make_move", {fen: this._fen, mov: move})
       buildBoard();
     },
-    makeVisibleTimeSvgs() {
-      document.getElementById("board_white_time_div").style.visibility = "visible";
-      document.getElementById("board_white_time_div").innerHTML = this._white_time;
-      
-      document.getElementById("board_black_time_div").style.visibility = "visible";
-      document.getElementById("board_black_time_div").innerHTML = this._black_time;
-      
-      if (this._playersType === PlayersTypes.EngineVsEngine){
-        document.getElementById("white_robot_time_svg").style.visibility = "visible"; 
-        document.getElementById("black_robot_time_svg").style.visibility = "visible";
-      }
-      if (this._playersType === PlayersTypes.PlayerWhiteVsEngine) {
-        document.getElementById("white_player_time_svg").style.visibility = "visible";
-        document.getElementById("black_robot_time_svg").style.visibility  = "visible";
-      }
-      if (this._playersType === PlayersTypes.PlayerBlackVsEngine) {
-        document.getElementById("white_robot_time_svg").style.visibility  = "visible";
-        document.getElementById("black_player_time_svg").style.visibility = "visible";
-      }
-      if (this._playersType === PlayersTypes.PlayerVsPlayer) {
-        document.getElementById("white_player_time_svg").style.visibility = "visible";
-        document.getElementById("black_player_time_svg").style.visibility = "visible";
-      }
+    getTimeFigureNames() {
+      if (this._playersType === PlayersTypes.EngineVsEngine)      return [  "robot"  ,  "robot"  ]
+      if (this._playersType === PlayersTypes.PlayerWhiteVsEngine) return [  "player" ,  "robot"  ]
+      if (this._playersType === PlayersTypes.PlayerBlackVsEngine) return [  "robot"  ,  "black"  ]
+      if (this._playersType === PlayersTypes.PlayerVsPlayer)      return [  "player" ,  "player" ]
     },
 
     isEngineTurn(){
@@ -110,12 +93,26 @@ const BoardState = {
     },
 }
 
-const formatTimePart = (oldColor) => {
+
+const makeVisibleTimeSvgs = () => {
+  let [whiteTime, blackTime] = BoardState.getCurrentTimes();
+  let [whiteTimeFigureName, blackTimeFigureName] = BoardState.getTimeFigureNames();
+  document.getElementById("board_white_time_div").style.visibility = "visible";
+  document.getElementById("board_white_time_div").innerHTML = whiteTime;
+
+  document.getElementById("board_black_time_div").style.visibility = "visible";
+  document.getElementById("board_black_time_div").innerHTML = blackTime;
+
+  document.getElementById("white_" + whiteTimeFigureName + "_time_svg").style.visibility = "visible";
+  document.getElementById("black_" + blackTimeFigureName + "_time_svg").style.visibility = "visible";
+}
+
+const updateTimePart = (oldColor) => {
   if (oldColor != BoardState.getColor()) return;
-  let timeDiv = document.getElementById("board_" + BoardState.getColor() + "_time_div");
-  let time = parseFloat(timeDiv.innerHTML) * MilliSecond - UpdateTimeInterval;
-  timeDiv.innerHTML = time;
-  setTimeout(formatTimePart, updatedTime);
+  let [whiteTime, blackTime] = BoardState.getCurrentTimes();
+  if (BoardState.getColor() == "white") whiteTime = whiteTime - UpdateTimeInterval;
+
+  setTimeout(() => updateTimePart(BoardState.getColor()), UpdateTimeInterval);
 }
 
 const getFile = (square) => square % 8
@@ -317,6 +314,7 @@ const deleteKingLabel  = () => {
 const handleMakeMoveAction = (grabbingPiece, e) => {
   grabbingPiece.classList.remove("grabbing");
   grabbingPiece.classList.add("grabbable");
+  grabbingPiece.style.zIndex = "3";
   let targetDiv = getClickedDiv(e);
   if (targetDiv) movePieceAndRebuildBoard(grabbingPiece, targetDiv.currentMove);
   else resetPiece(grabbingPiece);
@@ -328,6 +326,7 @@ const handlePickPieceAction = (pieces, e) => {
   createTargetDivs(clickedPiece);
   clickedPiece.classList.remove("grabbable");
   clickedPiece.classList.add("grabbing");
+  clickedPiece.style.zIndex = "10";
   setPieceCenterOfTheMouse(clickedPiece, e);
 }
 
