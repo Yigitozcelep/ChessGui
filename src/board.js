@@ -14,7 +14,7 @@ const SQUARE_HEIGHT = 9;
 
 const MoveAffectSpeed = 250;
 const UpdateTimeInterval = 200;
-const MilliSecond = 60000;
+const MinuteToMilliSecond = 60000;
 
 const PlayersTypes = {
   EngineVsEngine     : "Engine Vs Engine",
@@ -49,8 +49,8 @@ const BoardState = {
     "_playersType": PlayersTypes.PlayerVsPlayer,
     "_oldFens": [],
     "_white_time": 0,
-    "_white_time_plus": 0,
-    "_black_time_plus": 0,
+    "_white_time_plus": 0, // TODO bunlari ekle
+    "_black_time_plus": 0, // TODO bunlari ekle
     "_oldTimes": [0, 0],
     createBoard(fen, playersType, white_time, black_time) {
       document.getElementById("board_container").style.visibility = "visible";
@@ -59,21 +59,22 @@ const BoardState = {
       this._fen = fen;
       this._playersType = playersType;
       this._oldFens = [fen];
-      this._white_time = parseFloat(white_time) * MilliSecond;
-      this._black_time = parseFloat(black_time) * MilliSecond;
-      this._oldTimes = [[this._white_time, this._black_time]];
+      this._white_time = parseFloat(white_time) * MinuteToMilliSecond;
+      this._black_time = parseFloat(black_time) * MinuteToMilliSecond;
+      this._oldTimes = [[[this._white_time, this._black_time]]]; // every array contains current round times
       makeVisibleTimeSvgs();
       buildBoard();
     },
 
-    saveCurrentTimes(white, black)   {  this._oldTimes.push([white, black])                        },
-    getColor()                       {  return ColorMapping[this._fen.split(" ")[1]]               },
-    getOtherColor()                  {  return this.getColor() == "white" ? "black" :"white"       },
-    getBoardOfFen()                  {  return this._fen.split(" ")[0]                             },
-    getCurrentTimes()                {  return this._oldTimes[this._oldTimes.length -1];           },
-    async getMoves()                 {  return await invoke("get_moves", {fen: this._fen})         },
-    async isKingAttacked()           {  return await invoke("is_king_attacked", {fen: this._fen})  },
-    async getEngineMove()            {  return await invoke("get_engine_move", {fen: this._fen})   },
+    saveCurrentTimes(white, black)   {  this._oldTimes.at(-1).push([white, black])                            },
+    getColor()                       {  return ColorMapping[this._fen.split(" ")[1]]                          },
+    getOtherColor()                  {  return this.getColor() == "white" ? "black" :"white"                  },
+    getBoardOfFen()                  {  return this._fen.split(" ")[0]                                        },
+    getCurrentTimes()                {  return this._oldTimes.at(-1).at(-1);                                  },
+    isTimeLeft()                     {  return this.getCurrentTimes()[0] > 0 && this.getCurrentTimes()[1] > 0 },
+    async getMoves()                 {  return await invoke("get_moves", {fen: this._fen})                    },
+    async isKingAttacked()           {  return await invoke("is_king_attacked", {fen: this._fen})             },
+    async getEngineMove()            {  return await invoke("get_engine_move", {fen: this._fen})              },
     async makeMoveAndRebuild(move) {
       BoardState._fen = await invoke("make_move", {fen: this._fen, mov: move})
       buildBoard();
@@ -93,26 +94,35 @@ const BoardState = {
     },
 }
 
+const formatMiliSecond = (miliSec) => `${Math.floor(miliSec / 60000)}.${Math.floor((miliSec % 60000) / 1000)}`
 
 const makeVisibleTimeSvgs = () => {
   let [whiteTime, blackTime] = BoardState.getCurrentTimes();
   let [whiteTimeFigureName, blackTimeFigureName] = BoardState.getTimeFigureNames();
+  
   document.getElementById("board_white_time_div").style.visibility = "visible";
-  document.getElementById("board_white_time_div").innerHTML = whiteTime;
+  document.getElementById("board_white_time_div").innerHTML = formatMiliSecond(whiteTime);
 
   document.getElementById("board_black_time_div").style.visibility = "visible";
-  document.getElementById("board_black_time_div").innerHTML = blackTime;
+  document.getElementById("board_black_time_div").innerHTML = formatMiliSecond(blackTime);
 
   document.getElementById("white_" + whiteTimeFigureName + "_time_svg").style.visibility = "visible";
   document.getElementById("black_" + blackTimeFigureName + "_time_svg").style.visibility = "visible";
 }
 
+const isPieceMoving = () => Array.from(BOARD.childNodes).some((piece) => piece.style.transition)
+
 const updateTimePart = (oldColor) => {
-  if (oldColor != BoardState.getColor()) return;
+  if ( !(oldColor != BoardState.getColor() || !isBoardVisible() || isGameFnished()) && isPieceMoving() ) console.log("geliyor");
+  if (oldColor != BoardState.getColor() || !isBoardVisible() || isGameFnished() || isPieceMoving()) return;
   let [whiteTime, blackTime] = BoardState.getCurrentTimes();
   if (BoardState.getColor() == "white") whiteTime = whiteTime - UpdateTimeInterval;
-
-  setTimeout(() => updateTimePart(BoardState.getColor()), UpdateTimeInterval);
+  if (BoardState.getColor() == "black") blackTime = blackTime - UpdateTimeInterval;
+  
+  BoardState.saveCurrentTimes(whiteTime, blackTime)
+  document.getElementById("board_white_time_div").innerHTML = formatMiliSecond(whiteTime);
+  document.getElementById("board_black_time_div").innerHTML = formatMiliSecond(blackTime);
+  setTimeout(() => updateTimePart(oldColor), UpdateTimeInterval);
 }
 
 const getFile = (square) => square % 8
@@ -144,7 +154,7 @@ const getTopOfSquare  = (square) => getReverseRank(square) * SQUARE_HEIGHT + BOA
 const getLeftOfPiece  = (square) => getLeftOfSquare(square) + (SQUARE_WIDTH  - PIECE_WIDTH)  / 2 // centralize the piece
 const getTopOfPiece   = (square) => getTopOfSquare(square)  + (SQUARE_HEIGHT - PIECE_HEIGHT) / 2 // centralize the piece
 
-const isGrabbable = (pieceColor) => !BoardState.isEngineTurn() & BoardState.getColor() == pieceColor
+const isGrabbable = (pieceColor) => BoardState.isTimeLeft() && !BoardState.isEngineTurn() && BoardState.getColor() == pieceColor
 
 const createPieces = (moves) => {
   let square = 56;
@@ -185,6 +195,8 @@ const createItem = (square, piece, moves) => {
   BOARD.appendChild(img);
 }
 
+const isBoardVisible = () => document.getElementById("board_container").style.visibility === "visible"
+
 const labelKing = () => {
   let king = Array.from(BOARD.childNodes).find((piece => piece.pieceName == (BoardState.getColor() + "_" + "king")));
   let labelDiv = document.createElement("div");
@@ -194,7 +206,7 @@ const labelKing = () => {
   BOARD.appendChild(labelDiv);
 }
 
-const isGameFnished = (kingAttacked, moves) => kingAttacked && moves.length == 0
+const isGameFnished = (kingAttacked, moves) => ( kingAttacked && moves.length == 0 ) || !BoardState.isTimeLeft()
 
 const makeEngineMove = async () => {
   let engineMove = await BoardState.getEngineMove();
@@ -204,10 +216,9 @@ const makeEngineMove = async () => {
 }
 
 const buildBoard = async () => {
-  if (document.getElementById("board_container").style.visibility === "hidden") return;
+  if (!isBoardVisible()) return;
   let moves = await BoardState.getMoves();
   let kingAttacked = await BoardState.isKingAttacked();
-  
   BOARD.innerHTML = "";
   createPieces(moves);
   if (kingAttacked) labelKing();
@@ -215,7 +226,8 @@ const buildBoard = async () => {
     if (kingAttacked) labelTheResult(BoardState.getOtherColor() + " Win")
     else labelTheResult("Draw")
   }
-  
+  let color = BoardState.getColor()
+  if (!isGameFnished(kingAttacked, moves)) setTimeout(() => updateTimePart(color), UpdateTimeInterval);
   if (BoardState.isEngineTurn() && !isGameFnished(kingAttacked, moves)) makeEngineMove();
 }
 

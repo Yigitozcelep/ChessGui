@@ -231,7 +231,7 @@ body {
 .white_time_svg {
   position: absolute;
   left: 87vw;
-  top: 20vw;
+  top: 50vw;
   width: 8vw;
   height: 8vw;
 }
@@ -239,7 +239,7 @@ body {
 .black_time_svg {
   position: absolute;
   left: 87vw;
-  top: 50vw;
+  top: 20vw;
   width: 8vw;
   height: 8vw;
 }
@@ -251,15 +251,14 @@ body {
   position: absolute;
   font-size: 5vw;
   text-align: center;
-  
 }
 
 #board_white_time_div {
   left: 85vw;
-  top: 30vw;
+  top: 60vw;
 }
 
 #board_black_time_div {
   left: 85vw;
-  top: 60vw;
+  top: 30vw;
 }

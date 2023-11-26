@@ -28,7 +28,7 @@ fn get_king_coor(fen: String) -> String {
 
 #[tauri::command]
 fn get_engine_move(fen: String) -> String {
-    persa_chess::get_best_move(fen, 4)
+    persa_chess::get_best_move(fen, 1)
 }
 
 fn main() {
