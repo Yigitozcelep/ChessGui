@@ -62,12 +62,12 @@ body {
 }
 
 #EngineVsEngine {
-  top: 32vw;
+  top: 34vw;
   left: 25vw;
 }
 
 #PlayerVsPlayer {
-  top: 32vw;
+  top: 34vw;
   left: 55vw;
 }
 #PlayerVsEngine {
@@ -167,31 +167,54 @@ body {
 
 
 .time_label {
-  width: 11vw;
   height: 2vw;
   font-size: 2vw;
   position: absolute;
 }
 
 #white_time_label {
-  left: 32vw;
-  top: 26vw;
+  width: 11vw;
+  left: 30vw;
+  top: 25vw;
 }
 
 #black_time_label {
-  left: 51vw;
-  top: 26vw;
+  width: 11vw;
+  left: 55vw;
+  top: 25vw;
 }
 
+#white_time_plus_label {
+  width: 15vw;
+  left: 26vw;
+  top: 29vw;
+}
+
+#black_time_plus_label {
+  width: 15vw;
+  left: 51vw;
+  top: 29vw;
+}
 
 #white_time_entry {
-  left: 43vw;
-  top: 26vw;
+  left: 41vw;
+  top: 25vw;
 }
 
 #black_time_entry {
-  left: 62vw;
-  top: 26vw;
+  left: 66vw;
+  top: 25vw;
+}
+
+#white_time_plus_entry {
+  left: 41vw;
+  top: 29vw;
+}
+
+#black_time_plus_entry {
+  left: 66vw;
+  top: 29vw;
+
 }
 
 .time_entry {
@@ -206,15 +229,37 @@ body {
 
 
 .white_time_svg {
-  left: 90vw;
-  top: 10vw;
-  width: 5vw;
-  height: 5vw;
+  position: absolute;
+  left: 87vw;
+  top: 20vw;
+  width: 8vw;
+  height: 8vw;
 }
 
 .black_time_svg {
-  left: 90vw;
-  top: 30vw;
-  width: 5vw;
+  position: absolute;
+  left: 87vw;
+  top: 50vw;
+  width: 8vw;
+  height: 8vw;
+}
+
+.board_time_div {
+  width: 12vw;
   height: 5vw;
+  background-color: red;
+  position: absolute;
+  font-size: 5vw;
+  text-align: center;
+  
+}
+
+#board_white_time_div {
+  left: 85vw;
+  top: 30vw;
+}
+
+#board_black_time_div {
+  left: 85vw;
+  top: 60vw;
 }

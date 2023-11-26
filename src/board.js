@@ -13,6 +13,8 @@ const SQUARE_WIDTH  = 9;
 const SQUARE_HEIGHT = 9;
 
 const MoveAffectSpeed = 250;
+const UpdateTimeInterval = 200;
+const MilliSecond = 3600;
 
 const PlayersTypes = {
   EngineVsEngine     : "Engine Vs Engine",
@@ -46,17 +48,25 @@ const BoardState = {
     "_fen": "",
     "_playersType": PlayersTypes.PlayerVsPlayer,
     "_oldFens": [],
-
-    createBoard(fen, playersType) {
+    "_white_time": 0,
+    "_white_time_plus": 0,
+    "_black_time": 0,
+    "_black_time_plus": 0,
+    "_oldTimes": [0, 0],
+    createBoard(fen, playersType, white_time, black_time) {
       document.getElementById("board_container").style.visibility = "visible";
       document.getElementById("menu_container").style.visibility  = "hidden";
       BOARD.innerHTML = "";
       this._fen = fen;
       this._playersType = playersType;
       this._oldFens = [fen];
+      this._oldTimes = [white_time, black_time];
+      this._white_time = white_time;
+      this._black_time = black_time;
+      this.makeVisibleTimeSvgs();
       buildBoard();
     },
-
+    
     getColor() {return ColorMapping[this._fen.split(" ")[1]]},
     getOtherColor() {return this.getColor() == "white" ? "black" :"white"},
     getBoardOfFen() {return this._fen.split(" ")[0]},
@@ -67,12 +77,31 @@ const BoardState = {
       BoardState._fen = await invoke("make_move", {fen: this._fen, mov: move})
       buildBoard();
     },
-    getTimeFigureSvgs(playerType) {
-      if (this._playersType === PlayersTypes.EngineVsEngine)      return [ "./svgs/robot.svg",   "./svgs/robot.svg"  ]
-      if (this._playersType === PlayersTypes.PlayerWhiteVsEngine) return [ "./svgs/player.svg",  "./svgs/robot.svg"  ]
-      if (this._playersType === PlayersTypes.PlayerBlackVsEngine) return [ "./svgs/robot.svg",   "./svgs/player.svg" ]
-      if (this._playersType === PlayersTypes.PlayerVsPlayer)      return [ "./svgs/player.svg",  "./svgs/player.svg" ]
+    makeVisibleTimeSvgs() {
+      document.getElementById("board_white_time_div").style.visibility = "visible";
+      document.getElementById("board_white_time_div").innerHTML = this._white_time;
+      
+      document.getElementById("board_black_time_div").style.visibility = "visible";
+      document.getElementById("board_black_time_div").innerHTML = this._black_time;
+      
+      if (this._playersType === PlayersTypes.EngineVsEngine){
+        document.getElementById("white_robot_time_svg").style.visibility = "visible"; 
+        document.getElementById("black_robot_time_svg").style.visibility = "visible";
+      }
+      if (this._playersType === PlayersTypes.PlayerWhiteVsEngine) {
+        document.getElementById("white_player_time_svg").style.visibility = "visible";
+        document.getElementById("black_robot_time_svg").style.visibility  = "visible";
+      }
+      if (this._playersType === PlayersTypes.PlayerBlackVsEngine) {
+        document.getElementById("white_robot_time_svg").style.visibility  = "visible";
+        document.getElementById("black_player_time_svg").style.visibility = "visible";
+      }
+      if (this._playersType === PlayersTypes.PlayerVsPlayer) {
+        document.getElementById("white_player_time_svg").style.visibility = "visible";
+        document.getElementById("black_player_time_svg").style.visibility = "visible";
+      }
     },
+
     isEngineTurn(){
       if (this._playersType === PlayersTypes.EngineVsEngine) return true;
       if (this._playersType === PlayersTypes.PlayerWhiteVsEngine && this.getColor() === "black") return true;
@@ -81,8 +110,12 @@ const BoardState = {
     },
 }
 
-const createTimePart = () => {
-  
+const formatTimePart = (oldColor) => {
+  if (oldColor != BoardState.getColor()) return;
+  let timeDiv = document.getElementById("board_" + BoardState.getColor() + "_time_div");
+  let time = parseFloat(timeDiv.innerHTML) * MilliSecond - UpdateTimeInterval;
+  timeDiv.innerHTML = time;
+  setTimeout(formatTimePart, updatedTime);
 }
 
 const getFile = (square) => square % 8

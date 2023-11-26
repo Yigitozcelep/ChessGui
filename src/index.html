@@ -15,9 +15,11 @@
       <img id="board_img" src="./svgs/board.svg">
       <div id="board"></div>
       <div id="time_container"> 
-        <img src="svgs/person.svg" id="white_person_time_svg" class="white_time_svg">
+        <div id="board_white_time_div" class="board_time_div"></div>
+        <div id="board_black_time_div" class="board_time_div"></div>
+        <img src="svgs/person.svg" id="white_player_time_svg" class="white_time_svg">
         <img src="svgs/robot.svg"  id="white_robot_time_svg"  class="white_time_svg">
-        <img src="svgs/person.svg" id="black_person_time_svg" class="black_time_svg">
+        <img src="svgs/person.svg" id="black_player_time_svg" class="black_time_svg">
         <img src="svgs/robot.svg"  id="black_robot_time_svg"  class="black_time_svg">
       </div>
     </div>
@@ -31,7 +33,13 @@
         <input id="white_time_entry" class="time_entry" type="text">
         <div id="black_time_label" class="time_label">Black Time: </div>
         <input id="black_time_entry" class="time_entry" type="text">
-
+        
+        <div id="white_time_plus_label" class="time_label">White Time Plus: </div>
+        <input id="white_time_plus_entry" class="time_entry" type="text">
+        
+        <div id="black_time_plus_label" class="time_label">Black Time Plus: </div>
+        <input id="black_time_plus_entry" class="time_entry" type="text">
+        
       <div id="buttons"> 
 
         <div id="EngineVsEngine" class="manuel_button build_board_type"> Engine Vs Engine </div>
