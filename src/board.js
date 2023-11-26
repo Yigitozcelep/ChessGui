@@ -79,6 +79,8 @@ const BoardState = {
     async isKingAttacked()           {  return await invoke("is_king_attacked", {fen: this.getCurFen()})         },
     async getEngineMove()            {  return await invoke("get_engine_move",  {fen: this.getCurFen()})         },
     async makeMoveAndRebuild(move) {
+      console.log(BoardState.getCurrentTimes())
+      if (!BoardState.isTimeLeft()) return;
       let newFen = await invoke("make_move", {fen: this.getCurFen(), mov: move})
       this.saveNewFen(newFen);
       buildBoard();
@@ -119,10 +121,6 @@ const isPieceMoving = () => Array.from(BOARD.childNodes).some((piece) => piece.s
 
 const updateTimePart = (oldColor) => {
   if (oldColor != BoardState.getColor() || !isBoardVisible() || isPieceMoving()) return;
-  if (!BoardState.isTimeLeft()) {
-    buildBoard();
-    return;
-  }
   let [whiteTime, blackTime] = BoardState.getCurrentTimes();
   if (BoardState.getColor() == "white") whiteTime = whiteTime - UpdateTimeInterval;
   if (BoardState.getColor() == "black") blackTime = blackTime - UpdateTimeInterval;
@@ -130,7 +128,8 @@ const updateTimePart = (oldColor) => {
   BoardState.saveCurrentTimes(whiteTime, blackTime)
   document.getElementById("board_white_time_div").innerHTML = formatMiliSecond(whiteTime);
   document.getElementById("board_black_time_div").innerHTML = formatMiliSecond(blackTime);
-  setTimeout(() => updateTimePart(oldColor), UpdateTimeInterval);
+  if (!BoardState.isTimeLeft()) buildBoard();
+  else setTimeout(() => updateTimePart(oldColor), UpdateTimeInterval);
 }
 
 const getFile = (square) => square % 8
@@ -225,6 +224,7 @@ const makeEngineMove = async () => {
 }
 
 const buildBoard = async () => {
+  console.log("geldi")
   if (!isBoardVisible()) return;
   let moves = await BoardState.getMoves();
   let kingAttacked = await BoardState.isKingAttacked();
@@ -245,13 +245,12 @@ const pxToVw = (px) => (px / window.innerWidth) * 100
 
 const findGrabbingPiece = (pieces) => Array.from(pieces).find((piece) => piece.classList.contains("grabbing"));
 const findClickedPiece = (pieces, e) => {
-  return Array.from(pieces).find(piece => {
+  return Array.from(pieces).filter((piece) => piece.classList.contains("grabbable")).find(piece => {
     let left = piece.currentLeft.slice(0, -2) - 0; // removing vw from end
     let top  = piece.currentTop.slice(0, -2) - 0;  // same
     let pageX = pxToVw(e.pageX);
     let pageY = pxToVw(e.pageY);
-    return piece.classList.contains("grabbable") && 
-           left <= pageX && pageX <= left + PIECE_WIDTH && 
+    return left <= pageX && pageX <= left + PIECE_WIDTH && 
            top  <= pageY && pageY <= top  + PIECE_HEIGHT;
   })
 }
