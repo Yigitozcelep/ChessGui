@@ -53,39 +53,46 @@ const stringMinuteToMilliSecond = (input) => {
 const BoardState = {
     "_playersType": PlayersTypes.PlayerVsPlayer,
     "_oldFens": [],
-    "_whiteTimePlus": 0, // TODO bunlari ekle
-    "_blackTimePlus": 0, // TODO bunlari ekle
+    "_whiteTime": 0,
+    "_blackTime": 0,
+    "_whiteTimePlus": 0,
+    "_blackTimePlus": 0,
     "_oldTimes": [0, 0],
-    createBoard(fen, playersType, whiteTime, blackTime) {
+    createBoard(fen, playersType, whiteTime, blackTime, whitePlusTime, blackPlusTime) {
       document.getElementById("board_container").style.visibility = "visible";
       document.getElementById("menu_container").style.visibility  = "hidden";
       BOARD.innerHTML = "";
       this._playersType = playersType;
+      this._whiteTime = stringMinuteToMilliSecond(whiteTime);
+      this._blackTime = stringMinuteToMilliSecond(blackTime);
       this._oldFens = [fen];
-      this._oldTimes = [[[stringMinuteToMilliSecond(whiteTime), stringMinuteToMilliSecond(blackTime)]]]; // every array contains current round times
+      this._oldTimes = [[this._whiteTime, this._blackTime]]; // every index contains current round initial times
+      this._whiteTimePlus = whitePlusTime;
+      this._blackTimePlus = blackPlusTime;
       makeVisibleTimeSvgs();
       buildBoard();
     },
 
-    saveCurrentTimes(white, black)   {  this._oldTimes.at(-1).push([white, black])                               },
+    saveCurrentTimes(white, black)   {  this._whiteTime = white; this._blackTime = black;                        },
+    getCurrentTimes()                {  return [this._whiteTime, this._blackTime];                               },
+    saveTimesToOldTimes()            {  this._oldTimes.push(this.getCurrentTimes());                             },
     saveNewFen(fen)                  {  this._oldFens.push(fen)                                                  },
     getCurFen()                      {  return this._oldFens.at(-1)                                              },
     getColor()                       {  return ColorMapping[this.getCurFen().split(" ")[1]]                      },
     getOtherColor()                  {  return this.getColor() == "white" ? "black" :"white"                     },
     getBoardOfFen()                  {  return this.getCurFen().split(" ")[0]                                    },
-    getCurrentTimes()                {  return this._oldTimes.at(-1).at(-1);                                     },
     isTimeLeft()                     {  return this.getCurrentTimes()[0] > 0 && this.getCurrentTimes()[1] > 0    },
     async getMoves()                 {  return await invoke("get_moves",        {fen: this.getCurFen()})         },
     async isKingAttacked()           {  return await invoke("is_king_attacked", {fen: this.getCurFen()})         },
     async getEngineMove()            {  return await invoke("get_engine_move",  {fen: this.getCurFen()})         },
     async makeMoveAndRebuild(move) {
-      console.log(BoardState.getCurrentTimes())
       if (!BoardState.isTimeLeft()) return;
       let newFen = await invoke("make_move", {fen: this.getCurFen(), mov: move})
       this.saveNewFen(newFen);
+      this.saveTimesToOldTimes();
       buildBoard();
     },
-
+    
     getTimeFigureNames() {
       if (this._playersType === PlayersTypes.EngineVsEngine)      return [  "robot"  ,  "robot"  ]
       if (this._playersType === PlayersTypes.PlayerWhiteVsEngine) return [  "player" ,  "robot"  ]
@@ -224,7 +231,6 @@ const makeEngineMove = async () => {
 }
 
 const buildBoard = async () => {
-  console.log("geldi")
   if (!isBoardVisible()) return;
   let moves = await BoardState.getMoves();
   let kingAttacked = await BoardState.isKingAttacked();

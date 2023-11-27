@@ -7,27 +7,26 @@ const setColorOption = (color) => {
     document.getElementById("set_" + color + "_player_button").classList.add("color_is_clicked");
 }
 
-const getColorOption = () => document.getElementById("set_white_player_button").classList.contains("color_is_clicked") ? "white" : "black"
+const getColorOption   = () => document.getElementById("set_white_player_button").classList.contains("color_is_clicked") ? "white" : "black"
+const getFenFromEntry  = () => document.getElementById('fen_input').value.trim()
+const getWhitePlusTime = () => document.getElementById("white_time_plus_entry").value.trim()
+const getBlackPlusTime = () => document.getElementById("black_time_plus_entry").value.trim()
+const getWhiteTime     = () => document.getElementById("white_time_entry").value.trim();
+const getBlackTime     = () => document.getElementById("black_time_entry").value.trim();
 
-const getFenFromEntry = () => document.getElementById('fen_input').value.trim()
-
-const getWhiteTime = () => document.getElementById("white_time_entry").value.trim();
-const getBlackTime = () => document.getElementById("black_time_entry").value.trim();
+const createBoard = (playerType) => BoardState.createBoard(getFenFromEntry(), playerType, getWhiteTime(), getBlackTime(), getWhitePlusTime(), getBlackPlusTime());
 
 document.addEventListener('DOMContentLoaded', (event) => {
     document.getElementById("go_back_main_menu").onclick = createMainMenu;
     document.getElementById("set_white_player_button").onclick = () => setColorOption("white")
     document.getElementById("set_black_player_button").onclick = () => setColorOption("black")
-    document.getElementById("PlayerVsPlayer").onclick = () => BoardState.createBoard(getFenFromEntry(), PlayersTypes.PlayerVsPlayer, getWhiteTime(), getBlackTime())
-    document.getElementById("PlayerVsEngine").onclick = () => {
-        let color = getColorOption();
-        if      (color == "white") BoardState.createBoard(getFenFromEntry(), PlayersTypes.PlayerWhiteVsEngine, getWhiteTime(), getBlackTime())
-        else if (color == "black") BoardState.createBoard(getFenFromEntry(), PlayersTypes.PlayerBlackVsEngine, getWhiteTime(), getBlackTime())
-    }
-    document.getElementById("EngineVsEngine").onclick = () => BoardState.createBoard(getFenFromEntry(), PlayersTypes.EngineVsEngine, getWhiteTime(), getBlackTime());
+    document.getElementById("PlayerVsPlayer").onclick = () => createBoard(PlayersTypes.PlayerVsPlayer);
+    document.getElementById("PlayerVsEngine").onclick = () => getColorOption() === "white" ? createBoard(PlayersTypes.PlayerWhiteVsEngine) : createBoard(PlayersTypes.PlayerBlackVsEngine)
+    document.getElementById("EngineVsEngine").onclick = () => createBoard(PlayersTypes.EngineVsEngine);
 });
 
 const createMainMenu = () => {
+    console.log(BoardState._oldTimes);
     document.getElementById("board").innerHTML = "";
     document.getElementById("board_container").style.visibility = "hidden";
     document.getElementById("menu_container").style.visibility  = "visible";
