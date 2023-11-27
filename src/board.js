@@ -72,6 +72,7 @@ const BoardState = {
       this._blackTimePlus = stringMinuteToMilliSecond(blackTimePlus);
       console.log(this._whiteTimePlus, this._blackTimePlus)
       makeVisibleTimeSvgs();
+      changeOpacityOfTimeDivs();
       buildBoard();
     },
 
@@ -97,6 +98,7 @@ const BoardState = {
       this.saveTimesToOldTimes();
       let newFen = await invoke("make_move", {fen: this.getCurFen(), mov: move})
       this.saveNewFen(newFen);
+      changeOpacityOfTimeDivs();
       buildBoard();
     },
     
@@ -116,6 +118,11 @@ const BoardState = {
 }
 
 const formatMiliSecond = (miliSec) => `${Math.floor(miliSec / MinuteToMilliSecond)}.${Math.floor((miliSec % 60000) / SecondToMilliSecond)}`
+
+const changeOpacityOfTimeDivs = () => {
+  document.getElementById(BoardState.getColor()      + "_time_container").style.opacity = "1";
+  document.getElementById(BoardState.getOtherColor() + "_time_container").style.opacity = "0.7";
+}
 
 const makeVisibleTimeSvgs = () => {
   let [whiteTime, blackTime] = BoardState.getCurrentTimes();
