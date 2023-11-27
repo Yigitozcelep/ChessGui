@@ -19,6 +19,18 @@ const SecondToMilliSecond = 1000;
 
 const OpacityOfOtherPlayerTimeDiv = "0.7";
 
+document.getElementById("resign_button").onclick = () => {
+  if (BoardState.isGameFnished()) return;
+  BoardState.setGameResult(BoardState.getOtherColor() + " Win");
+  buildBoard();
+}
+
+document.getElementById("undo_button").onclick = () => {
+  if (BoardState.getNumberOfPlayedMove() === 0) return;
+  BoardState.deleteLastMove();
+  buildBoard();
+}
+
 const PlayersTypes = {
   EngineVsEngine     : "Engine Vs Engine",
   PlayerVsPlayer     : "Player Vs Player",
@@ -60,6 +72,8 @@ const BoardState = {
     "_whiteTimePlus": 0,
     "_blackTimePlus": 0,
     "_oldTimes": [0, 0],
+    "_isGameFnished": false,
+    "_gameResult": "",
     createBoard(fen, playersType, whiteTime, blackTime, whiteTimePlus, blackTimePlus) {
       document.getElementById("board_container").style.visibility = "visible";
       document.getElementById("menu_container").style.visibility  = "hidden";
@@ -71,6 +85,7 @@ const BoardState = {
       this._oldTimes = [[this._whiteTime, this._blackTime]]; // every index contains current round initial times
       this._whiteTimePlus = stringMinuteToMilliSecond(whiteTimePlus);
       this._blackTimePlus = stringMinuteToMilliSecond(blackTimePlus);
+      this._isGameFnished = false;
       makeVisibleTimeSvgs();
       changeOpacityOfTimeDivs();
       buildBoard();
@@ -85,10 +100,14 @@ const BoardState = {
     saveTimesToOldTimes()            {  this._oldTimes.push(this.getCurrentTimes());                             },
     saveNewFen(fen)                  {  this._oldFens.push(fen)                                                  },
     getCurFen()                      {  return this._oldFens.at(-1)                                              },
+    getNumberOfPlayedMove()          {  return this._oldFens.length -1                                           },
     getColor()                       {  return ColorMapping[this.getCurFen().split(" ")[1]]                      },
     getOtherColor()                  {  return this.getColor() == "white" ? "black" :"white"                     },
     getBoardOfFen()                  {  return this.getCurFen().split(" ")[0]                                    },
     isTimeLeft()                     {  return this.getCurrentTimes()[0] > 0 && this.getCurrentTimes()[1] > 0    },
+    isGameFnished()                  {  return this._isGameFnished                                               },
+    getGameResult()                  {  return this._gameResult                                                  },
+    setGameResult(result)            {  this._isGameFnished = true; this._gameResult = result                    },
     async getMoves()                 {  return await invoke("get_moves",        {fen: this.getCurFen()})         },
     async isKingAttacked()           {  return await invoke("is_king_attacked", {fen: this.getCurFen()})         },
     async getEngineMove()            {  return await invoke("get_engine_move",  {fen: this.getCurFen()})         },
@@ -99,17 +118,21 @@ const BoardState = {
       updateTimeDivHtml(...BoardState.getCurrentTimes())
       let newFen = await invoke("make_move", {fen: this.getCurFen(), mov: move})
       this.saveNewFen(newFen);
-      changeOpacityOfTimeDivs();
       buildBoard();
     },
-    
+    deleteLastMove() {
+      this._oldFens.pop();
+      this._oldTimes.pop();
+      this.saveCurrentTimes(...this._oldTimes.at(-1));
+      this._isGameFnished = false;
+    },
     getTimeFigureNames() {
       if (this._playersType === PlayersTypes.EngineVsEngine)      return [  "robot"  ,  "robot"  ]
       if (this._playersType === PlayersTypes.PlayerWhiteVsEngine) return [  "player" ,  "robot"  ]
       if (this._playersType === PlayersTypes.PlayerBlackVsEngine) return [  "robot"  ,  "player" ]
       if (this._playersType === PlayersTypes.PlayerVsPlayer)      return [  "player" ,  "player" ]
     },
-
+    
     isEngineTurn(){
       if (this._playersType === PlayersTypes.EngineVsEngine) return true;
       if (this._playersType === PlayersTypes.PlayerWhiteVsEngine && this.getColor() === "black") return true;
@@ -148,14 +171,17 @@ const updateTimeDivHtml = (whiteTime, blackTime) => {
 }
 
 const updateTimePart = (oldColor) => {
-  if (oldColor != BoardState.getColor() || !isBoardVisible() || isPieceMoving()) return;
+  if (oldColor != BoardState.getColor() || !isBoardVisible() || isPieceMoving() || BoardState.isGameFnished()) return;
   let [whiteTime, blackTime] = BoardState.getCurrentTimes();
   if (BoardState.getColor() == "white") whiteTime = whiteTime - UpdateTimeInterval;
   if (BoardState.getColor() == "black") blackTime = blackTime - UpdateTimeInterval;
   
   BoardState.saveCurrentTimes(whiteTime, blackTime)
   updateTimeDivHtml(whiteTime, blackTime);
-  if (!BoardState.isTimeLeft()) buildBoard();
+  if (!BoardState.isTimeLeft()) {
+    BoardState.setGameResult(BoardState.getOtherColor() + " Win")
+    buildBoard();
+  }
   else setTimeout(() => updateTimePart(oldColor), UpdateTimeInterval);
 }
 
@@ -188,7 +214,7 @@ const getTopOfSquare  = (square) => getReverseRank(square) * SQUARE_HEIGHT + BOA
 const getLeftOfPiece  = (square) => getLeftOfSquare(square) + (SQUARE_WIDTH  - PIECE_WIDTH)  / 2 // centralize the piece
 const getTopOfPiece   = (square) => getTopOfSquare(square)  + (SQUARE_HEIGHT - PIECE_HEIGHT) / 2 // centralize the piece
 
-const isGrabbable = (pieceColor) => BoardState.isTimeLeft() && !BoardState.isEngineTurn() && BoardState.getColor() == pieceColor
+const isGrabbable = (pieceColor) => !BoardState.isGameFnished() && !BoardState.isEngineTurn() && BoardState.getColor() == pieceColor
 
 const createPieces = (moves) => {
   let square = 56;
@@ -252,19 +278,24 @@ const makeEngineMove = async () => {
 
 const buildBoard = async () => {
   if (!isBoardVisible()) return;
+
+  changeOpacityOfTimeDivs();
+  
   let moves = await BoardState.getMoves();
   let kingAttacked = await BoardState.isKingAttacked();
   BOARD.innerHTML = "";
+
+  if (moves.length == 0 || !BoardState.isTimeLeft()) {
+    if (kingAttacked || !BoardState.isTimeLeft()) BoardState.setGameResult(BoardState.getOtherColor() + " Win")
+    else BoardState.setGameResult("Draw")
+  }
+  if (BoardState.isGameFnished()) labelTheResult(BoardState.getGameResult());
+
   createPieces(moves);
   if (kingAttacked) labelKing();
-  if (moves.length == 0 || !BoardState.isTimeLeft()) {
-    if (kingAttacked || !BoardState.isTimeLeft()) labelTheResult(BoardState.getOtherColor() + " Win")
-    else labelTheResult("Draw")
-  }
   
-  let color = BoardState.getColor()
-  if (!isGameFnished(kingAttacked, moves)) setTimeout(() => updateTimePart(color), UpdateTimeInterval);
-  if (BoardState.isEngineTurn() && !isGameFnished(kingAttacked, moves)) makeEngineMove();
+  if (!BoardState.isGameFnished()) setTimeout((color=BoardState.getColor()) => updateTimePart(color), UpdateTimeInterval);
+  if (BoardState.isEngineTurn() && !BoardState.isGameFnished()) makeEngineMove();
 }
 
 const pxToVw = (px) => (px / window.innerWidth) * 100
