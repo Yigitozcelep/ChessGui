@@ -17,6 +17,8 @@ const UpdateTimeInterval = 200;
 const MinuteToMilliSecond = 60000;
 const SecondToMilliSecond = 1000;
 
+const OpacityOfOtherPlayerTimeDiv = "0.7";
+
 const PlayersTypes = {
   EngineVsEngine     : "Engine Vs Engine",
   PlayerVsPlayer     : "Player Vs Player",
@@ -94,6 +96,7 @@ const BoardState = {
       if (!BoardState.isTimeLeft()) return;
       this.addPlusTimes();
       this.saveTimesToOldTimes();
+      updateTimeDivHtml(...BoardState.getCurrentTimes())
       let newFen = await invoke("make_move", {fen: this.getCurFen(), mov: move})
       this.saveNewFen(newFen);
       changeOpacityOfTimeDivs();
@@ -115,11 +118,12 @@ const BoardState = {
     },
 }
 
+
 const formatMiliSecond = (miliSec) => `${Math.floor(miliSec / MinuteToMilliSecond)}.${Math.floor((miliSec % 60000) / SecondToMilliSecond)}`
 
 const changeOpacityOfTimeDivs = () => {
   document.getElementById(BoardState.getColor()      + "_time_container").style.opacity = "1";
-  document.getElementById(BoardState.getOtherColor() + "_time_container").style.opacity = "0.7";
+  document.getElementById(BoardState.getOtherColor() + "_time_container").style.opacity = OpacityOfOtherPlayerTimeDiv;
 }
 
 const makeVisibleTimeSvgs = () => {
@@ -138,6 +142,11 @@ const makeVisibleTimeSvgs = () => {
 
 const isPieceMoving = () => Array.from(BOARD.childNodes).some((piece) => piece.style.transition)
 
+const updateTimeDivHtml = (whiteTime, blackTime) => {
+  document.getElementById("board_white_time_div").innerHTML = formatMiliSecond(whiteTime);
+  document.getElementById("board_black_time_div").innerHTML = formatMiliSecond(blackTime);
+}
+
 const updateTimePart = (oldColor) => {
   if (oldColor != BoardState.getColor() || !isBoardVisible() || isPieceMoving()) return;
   let [whiteTime, blackTime] = BoardState.getCurrentTimes();
@@ -145,8 +154,7 @@ const updateTimePart = (oldColor) => {
   if (BoardState.getColor() == "black") blackTime = blackTime - UpdateTimeInterval;
   
   BoardState.saveCurrentTimes(whiteTime, blackTime)
-  document.getElementById("board_white_time_div").innerHTML = formatMiliSecond(whiteTime);
-  document.getElementById("board_black_time_div").innerHTML = formatMiliSecond(blackTime);
+  updateTimeDivHtml(whiteTime, blackTime);
   if (!BoardState.isTimeLeft()) buildBoard();
   else setTimeout(() => updateTimePart(oldColor), UpdateTimeInterval);
 }
