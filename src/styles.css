@@ -116,7 +116,7 @@ body {
 #board_img {
   position: absolute;
   left: 10vw;
-  top:  7vw;
+  top:  9vw;
   width: 72vw;
   height: 72vw;
   margin: 0;
@@ -129,8 +129,8 @@ body {
   width: 18vw;
   height: 4vw;
   font-size: 2vw;
-  top: 1vw;
-  left: 1vw;
+  top: 1.5vw;
+  left: 1.5vw;
 }
 
 
@@ -158,8 +158,8 @@ body {
 .winner_label {
   width: 18vw;
   height: 5vw;
-  left: 50vw;
-  top: 1vw;
+  left: 23vw;
+  top: 1.5vw;
   font-size: 4vw;
   position: absolute;
   background-color: rgb(135, 124, 124);

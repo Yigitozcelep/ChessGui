@@ -8,7 +8,7 @@ const FILES = ["a","b","c","d","e","f","g","h"]
 const PIECE_WIDTH   = 6;
 const PIECE_HEIGHT  = 6;
 const BOARD_LEFT    = 10;
-const BOARD_TOP     = 7;
+const BOARD_TOP     = 9;
 const SQUARE_WIDTH  = 9;
 const SQUARE_HEIGHT = 9;
 
@@ -76,10 +76,8 @@ const BoardState = {
     },
 
     addPlusTimes()                   {  
-      console.log("before: ", this._whiteTime, this._blackTime);
       if (this.getColor() === "white") this._whiteTime += this._whiteTimePlus;
       if (this.getColor() === "black") this._blackTime += this._blackTimePlus;
-      console.log("after: ", this._whiteTime, this._blackTime);
     },
     saveCurrentTimes(white, black)   {  this._whiteTime = white; this._blackTime = black;                        },
     getCurrentTimes()                {  return [this._whiteTime, this._blackTime];                               },
