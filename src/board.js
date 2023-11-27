@@ -29,7 +29,11 @@ document.getElementById("undo_button").onclick = () => {
   if (BoardState.getNumberOfPlayedMove() === 0) return;
   BoardState.deleteLastMove();
   BoardState.incNumberOfUndo();
-  if (BoardState.isEngineTurn() && BoardState.getNumberOfPlayedMove() !== 0) BoardState.deleteLastMove();
+  if (!BoardState.isPlayerType(PlayersTypes.EngineVsEngine) && BoardState.isEngineTurn() 
+      && BoardState.getNumberOfPlayedMove() !== 0) {
+    BoardState.deleteLastMove()
+  }
+
   buildBoard();
 }
 
@@ -114,11 +118,13 @@ const BoardState = {
     isGameFnished()                  {  return this._isGameFnished                                               },
     getGameResult()                  {  return this._gameResult                                                  },
     setGameResult(result)            {  this._isGameFnished = true; this._gameResult = result                    },
+    isPlayerType(playerType)         {  return this._playersType === playerType                                  },
+    isFlippedBoard()                 {  return this._playersType === PlayersTypes.PlayerBlackVsEngine            },
     async getMoves()                 {  return await invoke("get_moves",        {fen: this.getCurFen()})         },
     async isKingAttacked()           {  return await invoke("is_king_attacked", {fen: this.getCurFen()})         },
     async getEngineMove()            {  return await invoke("get_engine_move",  {fen: this.getCurFen()})         },
-    async makeMoveAndRebuild(move) {
-      if (!BoardState.isTimeLeft()) return;
+    async makeMoveAndRebuild(move, undo) {
+      if (!this.isTimeLeft() || undo != this.getNumberOfUndo()) return;
       this.addPlusTimes();
       this.saveTimesToOldTimes();
       updateTimeDivHtml(...BoardState.getCurrentTimes())
@@ -215,12 +221,18 @@ const labelTheResult = (result) => {
   BOARD.appendChild(div);
 }
 
-const getReverseRank  = (square) => 7 - getRank(square)
-const getLeftOfSquare = (square) => getFile(square) * SQUARE_WIDTH  + BOARD_LEFT
-const getTopOfSquare  = (square) => getReverseRank(square) * SQUARE_HEIGHT + BOARD_TOP
+const getReverseRank   = (square) => 7 - getRank(square)
+const getReverseSquare = (square) => getReverseRank(square) * 8 + getFile(square);
 
-const getLeftOfPiece  = (square) => getLeftOfSquare(square) + (SQUARE_WIDTH  - PIECE_WIDTH)  / 2 // centralize the piece
-const getTopOfPiece   = (square) => getTopOfSquare(square)  + (SQUARE_HEIGHT - PIECE_HEIGHT) / 2 // centralize the piece
+const _getLeftOfSquare = (square) => getFile(square) * SQUARE_WIDTH  + BOARD_LEFT
+const _getTopOfSquare  = (square) => getReverseRank(square) * SQUARE_HEIGHT + BOARD_TOP
+const _getLeftOfPiece  = (square) => _getLeftOfSquare(square) + (SQUARE_WIDTH  - PIECE_WIDTH)  / 2 // centralize the piece
+const _getTopOfPiece   = (square) => _getTopOfSquare(square)  + (SQUARE_HEIGHT - PIECE_HEIGHT) / 2 // centralize the piece
+
+const getLeftOfPiece  = (square) => BoardState.isFlippedBoard() ? _getLeftOfPiece(getReverseSquare(square))  : _getLeftOfPiece(square);
+const getTopOfPiece   = (square) => BoardState.isFlippedBoard() ? _getTopOfPiece(getReverseSquare(square))   : _getTopOfPiece(square);
+const getTopOfSquare  = (square) => BoardState.isFlippedBoard() ? _getTopOfSquare(getReverseSquare(square))  : _getTopOfSquare(square);
+const getLeftOfSquare = (square) => BoardState.isFlippedBoard() ? _getLeftOfSquare(getReverseSquare(square)) : _getLeftOfSquare(square);
 
 const isGrabbable = (pieceColor) => !BoardState.isGameFnished() && !BoardState.isEngineTurn() && BoardState.getColor() == pieceColor
 
@@ -302,7 +314,8 @@ const buildBoard = async () => {
   createPieces(moves);
   if (kingAttacked) labelKing();
   
-  if (!BoardState.isGameFnished()) setTimeout((color=BoardState.getColor(), undo=BoardState.getNumberOfUndo()) => updateTimePart(color, undo), UpdateTimeInterval);
+  let [color, undo] = [BoardState.getColor(), BoardState.getNumberOfUndo()];
+  if (!BoardState.isGameFnished()) setTimeout(() => updateTimePart(color, undo), UpdateTimeInterval);
   if (BoardState.isEngineTurn() && !BoardState.isGameFnished()) makeEngineMove();
 }
 
@@ -329,7 +342,7 @@ const createTargetDivs = (piece) => {
     targetDiv.style.top  = getTopOfSquare(targetSquare)  + "vw";
     targetDiv.currentMove = move;
     targetDiv.currentSquare = getSquare(move.slice(2, targetDiv.currentMove.length));
-
+    
     BOARD.appendChild(targetDiv);
   })
 }
@@ -376,7 +389,9 @@ const movePieceAndRebuildBoard = (grabbingPiece, currentMove) => {
   let targetSquare = getSquare(currentMove.slice(2, currentMove.length));
   slowlyMoveAffect(grabbingPiece, targetSquare);
   if (isMoveCastle(grabbingPiece, targetSquare)) slowlyMoveRook(grabbingPiece, currentMove)
-  setTimeout(() => BoardState.makeMoveAndRebuild(currentMove), MoveAffectSpeed);
+  
+  let undo = BoardState.getNumberOfUndo();
+  setTimeout(() => BoardState.makeMoveAndRebuild(currentMove, undo), MoveAffectSpeed);
 }
 
 const resetPiece = (piece) => {
