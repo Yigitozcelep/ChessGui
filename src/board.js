@@ -58,7 +58,7 @@ const BoardState = {
     "_whiteTimePlus": 0,
     "_blackTimePlus": 0,
     "_oldTimes": [0, 0],
-    createBoard(fen, playersType, whiteTime, blackTime, whitePlusTime, blackPlusTime) {
+    createBoard(fen, playersType, whiteTime, blackTime, whiteTimePlus, blackTimePlus) {
       document.getElementById("board_container").style.visibility = "visible";
       document.getElementById("menu_container").style.visibility  = "hidden";
       BOARD.innerHTML = "";
@@ -67,12 +67,20 @@ const BoardState = {
       this._blackTime = stringMinuteToMilliSecond(blackTime);
       this._oldFens = [fen];
       this._oldTimes = [[this._whiteTime, this._blackTime]]; // every index contains current round initial times
-      this._whiteTimePlus = whitePlusTime;
-      this._blackTimePlus = blackPlusTime;
+      console.log(whiteTimePlus, blackTime)
+      this._whiteTimePlus = stringMinuteToMilliSecond(whiteTimePlus);
+      this._blackTimePlus = stringMinuteToMilliSecond(blackTimePlus);
+      console.log(this._whiteTimePlus, this._blackTimePlus)
       makeVisibleTimeSvgs();
       buildBoard();
     },
 
+    addPlusTimes()                   {  
+      console.log("before: ", this._whiteTime, this._blackTime);
+      if (this.getColor() === "white") this._whiteTime += this._whiteTimePlus;
+      if (this.getColor() === "black") this._blackTime += this._blackTimePlus;
+      console.log("after: ", this._whiteTime, this._blackTime);
+    },
     saveCurrentTimes(white, black)   {  this._whiteTime = white; this._blackTime = black;                        },
     getCurrentTimes()                {  return [this._whiteTime, this._blackTime];                               },
     saveTimesToOldTimes()            {  this._oldTimes.push(this.getCurrentTimes());                             },
@@ -87,9 +95,10 @@ const BoardState = {
     async getEngineMove()            {  return await invoke("get_engine_move",  {fen: this.getCurFen()})         },
     async makeMoveAndRebuild(move) {
       if (!BoardState.isTimeLeft()) return;
+      this.addPlusTimes();
+      this.saveTimesToOldTimes();
       let newFen = await invoke("make_move", {fen: this.getCurFen(), mov: move})
       this.saveNewFen(newFen);
-      this.saveTimesToOldTimes();
       buildBoard();
     },
     
