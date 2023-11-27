@@ -67,10 +67,8 @@ const BoardState = {
       this._blackTime = stringMinuteToMilliSecond(blackTime);
       this._oldFens = [fen];
       this._oldTimes = [[this._whiteTime, this._blackTime]]; // every index contains current round initial times
-      console.log(whiteTimePlus, blackTime)
       this._whiteTimePlus = stringMinuteToMilliSecond(whiteTimePlus);
       this._blackTimePlus = stringMinuteToMilliSecond(blackTimePlus);
-      console.log(this._whiteTimePlus, this._blackTimePlus)
       makeVisibleTimeSvgs();
       changeOpacityOfTimeDivs();
       buildBoard();
@@ -105,7 +103,7 @@ const BoardState = {
     getTimeFigureNames() {
       if (this._playersType === PlayersTypes.EngineVsEngine)      return [  "robot"  ,  "robot"  ]
       if (this._playersType === PlayersTypes.PlayerWhiteVsEngine) return [  "player" ,  "robot"  ]
-      if (this._playersType === PlayersTypes.PlayerBlackVsEngine) return [  "robot"  ,  "black"  ]
+      if (this._playersType === PlayersTypes.PlayerBlackVsEngine) return [  "robot"  ,  "player" ]
       if (this._playersType === PlayersTypes.PlayerVsPlayer)      return [  "player" ,  "player" ]
     },
 
