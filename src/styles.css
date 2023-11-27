@@ -262,3 +262,38 @@ body {
   left: 85vw;
   top: 30vw;
 }
+
+
+.board_buttons {
+  opacity: 1;
+  cursor: pointer;
+  position: absolute;
+}
+
+#undo_button {
+  width: 5vw;
+  height: 5vw;
+  top: 75vw;
+  left: 85vw;
+}
+
+#resign_button {
+  width: 5vw;
+  height: 5vw;
+  top: 75vw;
+  left: 92vw;
+}
+
+#undo_button:hover {
+  background-color: orange;
+  border-radius: 50px;
+}
+
+.board_buttons:hover {
+  transform: scale(1.1)
+}
+
+.board_buttons:active {
+  transform: translateY(4px);
+}
+
