@@ -28,6 +28,8 @@ document.getElementById("resign_button").onclick = () => {
 document.getElementById("undo_button").onclick = () => {
   if (BoardState.getNumberOfPlayedMove() === 0) return;
   BoardState.deleteLastMove();
+  BoardState.incNumberOfUndo();
+  if (BoardState.isEngineTurn() && BoardState.getNumberOfPlayedMove() !== 0) BoardState.deleteLastMove();
   buildBoard();
 }
 
@@ -74,6 +76,7 @@ const BoardState = {
     "_oldTimes": [0, 0],
     "_isGameFnished": false,
     "_gameResult": "",
+    "_numberOfUndo": 0,
     createBoard(fen, playersType, whiteTime, blackTime, whiteTimePlus, blackTimePlus) {
       document.getElementById("board_container").style.visibility = "visible";
       document.getElementById("menu_container").style.visibility  = "hidden";
@@ -86,6 +89,7 @@ const BoardState = {
       this._whiteTimePlus = stringMinuteToMilliSecond(whiteTimePlus);
       this._blackTimePlus = stringMinuteToMilliSecond(blackTimePlus);
       this._isGameFnished = false;
+      this._numberOfUndo = 0;
       makeVisibleTimeSvgs();
       changeOpacityOfTimeDivs();
       buildBoard();
@@ -95,6 +99,8 @@ const BoardState = {
       if (this.getColor() === "white") this._whiteTime += this._whiteTimePlus;
       if (this.getColor() === "black") this._blackTime += this._blackTimePlus;
     },
+    getNumberOfUndo()                {  return this._numberOfUndo                                                },
+    incNumberOfUndo()                {  this._numberOfUndo += 1                                                  },
     saveCurrentTimes(white, black)   {  this._whiteTime = white; this._blackTime = black;                        },
     getCurrentTimes()                {  return [this._whiteTime, this._blackTime];                               },
     saveTimesToOldTimes()            {  this._oldTimes.push(this.getCurrentTimes());                             },
@@ -132,7 +138,7 @@ const BoardState = {
       if (this._playersType === PlayersTypes.PlayerBlackVsEngine) return [  "robot"  ,  "player" ]
       if (this._playersType === PlayersTypes.PlayerVsPlayer)      return [  "player" ,  "player" ]
     },
-    
+
     isEngineTurn(){
       if (this._playersType === PlayersTypes.EngineVsEngine) return true;
       if (this._playersType === PlayersTypes.PlayerWhiteVsEngine && this.getColor() === "black") return true;
@@ -170,8 +176,10 @@ const updateTimeDivHtml = (whiteTime, blackTime) => {
   document.getElementById("board_black_time_div").innerHTML = formatMiliSecond(blackTime);
 }
 
-const updateTimePart = (oldColor) => {
-  if (oldColor != BoardState.getColor() || !isBoardVisible() || isPieceMoving() || BoardState.isGameFnished()) return;
+const updateTimePart = (oldColor, numberOfUndo) => {
+  if (oldColor != BoardState.getColor() || !isBoardVisible() || isPieceMoving() 
+      || BoardState.isGameFnished() || numberOfUndo != BoardState.getNumberOfUndo()) return;
+
   let [whiteTime, blackTime] = BoardState.getCurrentTimes();
   if (BoardState.getColor() == "white") whiteTime = whiteTime - UpdateTimeInterval;
   if (BoardState.getColor() == "black") blackTime = blackTime - UpdateTimeInterval;
@@ -182,7 +190,7 @@ const updateTimePart = (oldColor) => {
     BoardState.setGameResult(BoardState.getOtherColor() + " Win")
     buildBoard();
   }
-  else setTimeout(() => updateTimePart(oldColor), UpdateTimeInterval);
+  else setTimeout(() => updateTimePart(oldColor, numberOfUndo), UpdateTimeInterval);
 }
 
 const getFile = (square) => square % 8
@@ -294,7 +302,7 @@ const buildBoard = async () => {
   createPieces(moves);
   if (kingAttacked) labelKing();
   
-  if (!BoardState.isGameFnished()) setTimeout((color=BoardState.getColor()) => updateTimePart(color), UpdateTimeInterval);
+  if (!BoardState.isGameFnished()) setTimeout((color=BoardState.getColor(), undo=BoardState.getNumberOfUndo()) => updateTimePart(color, undo), UpdateTimeInterval);
   if (BoardState.isEngineTurn() && !BoardState.isGameFnished()) makeEngineMove();
 }
 
