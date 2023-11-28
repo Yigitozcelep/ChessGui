@@ -141,7 +141,7 @@ const BoardState = {
     getTimeFigureNames() {
       if (this._playersType === PlayersTypes.EngineVsEngine)      return [  "robot"  ,  "robot"  ]
       if (this._playersType === PlayersTypes.PlayerWhiteVsEngine) return [  "player" ,  "robot"  ]
-      if (this._playersType === PlayersTypes.PlayerBlackVsEngine) return [  "robot"  ,  "player" ]
+      if (this._playersType === PlayersTypes.PlayerBlackVsEngine) return [  "player" ,  "robot"  ]
       if (this._playersType === PlayersTypes.PlayerVsPlayer)      return [  "player" ,  "player" ]
     },
 
@@ -157,8 +157,14 @@ const BoardState = {
 const formatMiliSecond = (miliSec) => `${Math.floor(miliSec / MinuteToMilliSecond)}.${Math.floor((miliSec % 60000) / SecondToMilliSecond)}`
 
 const changeOpacityOfTimeDivs = () => {
-  document.getElementById(BoardState.getColor()      + "_time_container").style.opacity = "1";
-  document.getElementById(BoardState.getOtherColor() + "_time_container").style.opacity = OpacityOfOtherPlayerTimeDiv;
+  if (BoardState.isPlayerType(PlayersTypes.PlayerBlackVsEngine)) {
+    document.getElementById(BoardState.getOtherColor() + "_time_container").style.opacity = "1";
+    document.getElementById(BoardState.getColor()      + "_time_container").style.opacity = OpacityOfOtherPlayerTimeDiv;
+  }
+  else {
+    document.getElementById(BoardState.getColor()      + "_time_container").style.opacity = "1";
+    document.getElementById(BoardState.getOtherColor() + "_time_container").style.opacity = OpacityOfOtherPlayerTimeDiv;
+  }
 }
 
 const makeVisibleTimeSvgs = () => {
@@ -178,6 +184,7 @@ const makeVisibleTimeSvgs = () => {
 const isPieceMoving = () => Array.from(BOARD.childNodes).some((piece) => piece.style.transition)
 
 const updateTimeDivHtml = (whiteTime, blackTime) => {
+  if (BoardState.isPlayerType(PlayersTypes.PlayerBlackVsEngine)) [whiteTime, blackTime] = [blackTime, whiteTime]
   document.getElementById("board_white_time_div").innerHTML = formatMiliSecond(whiteTime);
   document.getElementById("board_black_time_div").innerHTML = formatMiliSecond(blackTime);
 }
