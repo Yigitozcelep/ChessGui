@@ -1,6 +1,7 @@
 'use strict';
 
 const invoke = window.__TAURI__.invoke
+const listen = window.__TAURI__.event.listen;
 
 const BOARD = document.getElementById("board")
 const FILES = ["a","b","c","d","e","f","g","h"]
@@ -17,7 +18,17 @@ const UpdateTimeInterval = 200;
 const MinuteToMilliSecond = 60000;
 const SecondToMilliSecond = 1000;
 
+
 const OpacityOfOtherPlayerTimeDiv = "0.7";
+
+
+listen("get_engine_move_done", (event) => {
+  let undo = event.payload[1];
+  if (BoardState.isGameFnished() || undo != BoardState.getNumberOfUndo()) return;
+  let [move, score, fen] = event.payload[0].split(";");
+  let currentPiece = document.getElementById(move.slice(0, 2));
+  movePieceAndRebuildBoard(currentPiece, move);
+})
 
 document.getElementById("resign_button").onclick = () => {
   if (BoardState.isGameFnished()) return;
@@ -103,26 +114,26 @@ const BoardState = {
       if (this.getColor() === "white") this._whiteTime += this._whiteTimePlus;
       if (this.getColor() === "black") this._blackTime += this._blackTimePlus;
     },
-    getNumberOfUndo()                {  return this._numberOfUndo                                                },
-    incNumberOfUndo()                {  this._numberOfUndo += 1                                                  },
-    saveCurrentTimes(white, black)   {  this._whiteTime = white; this._blackTime = black;                        },
-    getCurrentTimes()                {  return [this._whiteTime, this._blackTime];                               },
-    saveTimesToOldTimes()            {  this._oldTimes.push(this.getCurrentTimes());                             },
-    saveNewFen(fen)                  {  this._oldFens.push(fen)                                                  },
-    getCurFen()                      {  return this._oldFens.at(-1)                                              },
-    getNumberOfPlayedMove()          {  return this._oldFens.length -1                                           },
-    getColor()                       {  return ColorMapping[this.getCurFen().split(" ")[1]]                      },
-    getOtherColor()                  {  return this.getColor() == "white" ? "black" :"white"                     },
-    getBoardOfFen()                  {  return this.getCurFen().split(" ")[0]                                    },
-    isTimeLeft()                     {  return this.getCurrentTimes()[0] > 0 && this.getCurrentTimes()[1] > 0    },
-    isGameFnished()                  {  return this._isGameFnished                                               },
-    getGameResult()                  {  return this._gameResult                                                  },
-    setGameResult(result)            {  this._isGameFnished = true; this._gameResult = result                    },
-    isPlayerType(playerType)         {  return this._playersType === playerType                                  },
-    isFlippedBoard()                 {  return this._playersType === PlayersTypes.PlayerBlackVsEngine            },
-    async getMoves()                 {  return await invoke("get_moves",        {fen: this.getCurFen()})         },
-    async isKingAttacked()           {  return await invoke("is_king_attacked", {fen: this.getCurFen()})         },
-    async getEngineMove()            {  return await invoke("get_engine_move",  {fen: this.getCurFen()})         },
+    getNumberOfUndo()                {  return this._numberOfUndo                                                        },
+    incNumberOfUndo()                {  this._numberOfUndo += 1                                                          },
+    saveCurrentTimes(white, black)   {  this._whiteTime = white; this._blackTime = black;                                },
+    getCurrentTimes()                {  return [this._whiteTime, this._blackTime];                                       },
+    saveTimesToOldTimes()            {  this._oldTimes.push(this.getCurrentTimes());                                     },
+    saveNewFen(fen)                  {  this._oldFens.push(fen)                                                          },
+    getCurFen()                      {  return this._oldFens.at(-1)                                                      },
+    getNumberOfPlayedMove()          {  return this._oldFens.length -1                                                   },
+    getColor()                       {  return ColorMapping[this.getCurFen().split(" ")[1]]                              },
+    getOtherColor()                  {  return this.getColor() == "white" ? "black" :"white"                             },
+    getBoardOfFen()                  {  return this.getCurFen().split(" ")[0]                                            },
+    isTimeLeft()                     {  return this.getCurrentTimes()[0] > 0 && this.getCurrentTimes()[1] > 0            },
+    isGameFnished()                  {  return this._isGameFnished                                                       },
+    getGameResult()                  {  return this._gameResult                                                          },
+    setGameResult(result)            {  this._isGameFnished = true; this._gameResult = result                            },
+    isPlayerType(playerType)         {  return this._playersType === playerType                                          },
+    isFlippedBoard()                 {  return this._playersType === PlayersTypes.PlayerBlackVsEngine                    },
+    async getMoves()                 {  return await invoke("get_moves",        {fen: this.getCurFen()})                 },
+    async isKingAttacked()           {  return await invoke("is_king_attacked", {fen: this.getCurFen()})                 },
+    async makeEngineMove()           {  invoke("get_engine_move", {fen: this.getCurFen(), undo: this.getNumberOfUndo()}) },
     async makeMoveAndRebuild(move, undo) {
       if (!this.isTimeLeft() || undo != this.getNumberOfUndo()) return;
       this.addPlusTimes();
@@ -296,13 +307,6 @@ const labelKing = () => {
 
 const isGameFnished = (kingAttacked, moves) => ( kingAttacked && moves.length == 0 ) || !BoardState.isTimeLeft()
 
-const makeEngineMove = async () => {
-  let engineMove = await BoardState.getEngineMove();
-  let [move, score, fen] = engineMove.split(";");
-  let currentPiece = document.getElementById(move.slice(0, 2));
-  movePieceAndRebuildBoard(currentPiece, move);
-}
-
 const buildBoard = async () => {
   if (!isBoardVisible()) return;
 
@@ -323,7 +327,7 @@ const buildBoard = async () => {
   
   let [color, undo] = [BoardState.getColor(), BoardState.getNumberOfUndo()];
   if (!BoardState.isGameFnished()) setTimeout(() => updateTimePart(color, undo), UpdateTimeInterval);
-  if (BoardState.isEngineTurn() && !BoardState.isGameFnished()) makeEngineMove();
+  if (BoardState.isEngineTurn() && !BoardState.isGameFnished()) BoardState.makeEngineMove();
 }
 
 const pxToVw = (px) => (px / window.innerWidth) * 100
@@ -396,7 +400,6 @@ const movePieceAndRebuildBoard = (grabbingPiece, currentMove) => {
   let targetSquare = getSquare(currentMove.slice(2, currentMove.length));
   slowlyMoveAffect(grabbingPiece, targetSquare);
   if (isMoveCastle(grabbingPiece, targetSquare)) slowlyMoveRook(grabbingPiece, currentMove)
-  
   let undo = BoardState.getNumberOfUndo();
   setTimeout(() => BoardState.makeMoveAndRebuild(currentMove, undo), MoveAffectSpeed);
 }

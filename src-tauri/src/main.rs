@@ -3,6 +3,7 @@
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 
+use tauri::{command, AppHandle, Manager, App};
 use persa_chess;
 
 
@@ -27,8 +28,11 @@ fn get_king_coor(fen: String) -> String {
 }
 
 #[tauri::command]
-fn get_engine_move(fen: String) -> String {
-    persa_chess::get_best_move(fen, 1)
+fn get_engine_move(app: AppHandle, fen: String, undo: isize) {
+    std::thread::spawn(move || {
+        let result = persa_chess::get_best_move(fen, 6);
+        app.emit_all("get_engine_move_done", (result, undo)).unwrap();
+    });
 }
 
 fn main() {
