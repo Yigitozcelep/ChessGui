@@ -2,6 +2,18 @@
 
 const invoke = window.__TAURI__.invoke
 const listen = window.__TAURI__.event.listen;
+const emit = window.__TAURI__.event.emit;
+
+listen("muz", (event) => {
+  console.log("geliyor");
+  console.log(event);
+});
+
+invoke("initialize_engine_comminications", {});
+invoke("add_new_engine", {path: "../mybin"});
+invoke("get_best_move", {});
+
+
 
 const BOARD = document.getElementById("board")
 const FILES = ["a","b","c","d","e","f","g","h"]

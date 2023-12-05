@@ -3,42 +3,41 @@
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 
-use tauri::{command, AppHandle, Manager, App};
-use persa_chess;
 
+pub mod engine_communucation;
+
+use tauri::{AppHandle, App};
+
+use crate::engine_communucation::EngineCommunications;
+
+
+static mut ENGINE_COMMUNUCATION: EngineCommunications = EngineCommunications::new();
 
 #[tauri::command]
-fn get_moves(fen: String) -> Vec<String>{
-    persa_chess::get_moves(fen)
+fn add_new_engine(path: String) {
+    unsafe { ENGINE_COMMUNUCATION.add_new_engine(path); }
 }
 
 #[tauri::command]
-fn make_move(fen: String, mov: String) -> String {
-    persa_chess::make_move(fen, mov)
+fn get_best_move() {
+    unsafe {
+        ENGINE_COMMUNUCATION.find_best_move();
+    }
 }
 
 #[tauri::command]
-fn is_king_attacked(fen: String) -> bool {
-    persa_chess::is_king_attacked(fen)
+fn initialize_engine_comminications(app: AppHandle) {
+    println!("geliyor");
+    unsafe { ENGINE_COMMUNUCATION.initialize(app); }
+    println!("super");
 }
 
-#[tauri::command]
-fn get_king_coor(fen: String) -> String {
-    persa_chess::get_king_coor(fen)
-}
-
-#[tauri::command]
-fn get_engine_move(app: AppHandle, fen: String, undo: isize) {
-    std::thread::spawn(move || {
-        let result = persa_chess::get_best_move(fen, 6);
-        app.emit_all("get_engine_move_done", (result, undo)).unwrap();
-    });
-}
 
 fn main() {
-    persa_chess::init_all_statics();
+    
+    // Create channels for sending and receiving messages
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![get_moves, make_move, is_king_attacked, get_king_coor, get_engine_move])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+    .invoke_handler(tauri::generate_handler![initialize_engine_comminications, get_best_move, add_new_engine])
+    .run(tauri::generate_context!())
+    .expect("error while running tauri application");
 }
