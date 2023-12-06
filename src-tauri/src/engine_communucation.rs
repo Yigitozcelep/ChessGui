@@ -1,101 +1,89 @@
-use std::fmt::format;
 use std::io::{BufReader, BufRead, Write};
-use std::process::{Command, Stdio, ChildStdin, ChildStdout};
-use std::sync::{Arc, Mutex};
-use std::sync::mpsc::{Sender, channel, Receiver};
+use std::process::{Command, Stdio, ChildStdin};
 use std::thread;
-use tauri::{command, AppHandle, Manager, App, Window};
+use tauri::{AppHandle, Manager};
 
-
-pub fn get_expected_output(input: &str) -> String {
-    if input.contains("go perft") {return "Nodes searched: ".to_string();}
-    if input.contains("go") {return "bestmove".to_string()}
-
-    unreachable!();
+trait OutputFormeter {
+    fn read_new_line(&mut self, line: String);
+    fn is_data_collection_complete(&self) -> bool;
+    fn send_information(&self);
 }
 
-pub fn comminucate(path: String, sender: Sender<String>) -> ChildStdin {
-    let mut child = Command::new(path)
-                    .stdin(Stdio::piped())
-                    .stdout(Stdio::piped())
-                    .spawn()
-                    .unwrap();
-    
-    let stdin = child.stdin.take().unwrap();
-    let stdout = child.stdout.take().unwrap();
-    
-    thread::spawn(move || {
-        let reader = BufReader::new(stdout);
-        for line in reader.lines() {
-            sender.send(line.unwrap()).unwrap();
-        }
-    });
-    return stdin;
+struct SearchMove(Vec<String>);
+impl SearchMove {
+    pub fn new () -> Self { Self(Vec::new()) }
 }
 
 
-enum EngineTask {
-    Waiting,
-    SearchingMove,
-    SearchingPerft,
+impl OutputFormeter for SearchMove {
+    fn read_new_line(&mut self, line: String) {
+        let mut data = line.split_whitespace();
+        if data.next().unwrap() == "bestmove" { self.0.push(data.next().unwrap().to_string())}
+    }
+    fn is_data_collection_complete(&self) -> bool {
+        true
+    }
+    fn send_information(&self) {
+        
+    }
 }
 
-pub struct Engine {
+
+pub struct UnpipedEngine(String);
+impl UnpipedEngine {
+    pub fn new(path: String) -> Self { Self(path) }
+    pub fn piped(&self) -> PipedEngine { PipedEngine::new(self.0, Box::new(SearchMove::new())) }
+}
+
+pub struct PipedEngine {
     stdin: ChildStdin,
-    current_task: EngineTask,
+    output_formeter: Box<dyn OutputFormeter>,
+    is_searching: bool,
 }
 
-impl Engine{
-    pub fn new(path: String, app: Arc<AppHandle>) -> Self {
+impl PipedEngine{
+
+    pub fn new(path: String, output_formeter: Box<dyn OutputFormeter>) -> Self {
         let mut child = Command::new(path)
                                 .stdin(Stdio::piped())
                                 .stdout(Stdio::piped())
                                 .spawn()
                                 .unwrap();
         
-        
-        thread::spawn(move || {
-            println!("thread started");
-            let reader = BufReader::new(child.stdout.unwrap());
-            for line in reader.lines() {
-                app.emit_all("muz", line.unwrap());
-            }
-            println!("thread is dead");
-        });
-
         Self {
             stdin: child.stdin.take().unwrap(),
-            current_task: EngineTask::Waiting,
+            is_searching: false,
+            output_formeter: Box::new(SearchMove::new()),
         }
     }
 }
 
 
 pub struct EngineCommunications{
-    pipes   : Vec<Engine>,
-    app: Option<Arc<AppHandle>>,
+    piped_engines   : Vec<PipedEngine>,
+    unpiped_engines : Vec<UnpipedEngine>,
+    app: Option<AppHandle>,
 }
 
 impl EngineCommunications {
     pub const fn new() -> Self {
-        Self { pipes:  Vec::new(), app: None}
+        Self { piped_engines:  Vec::new(), unpiped_engines: Vec::new(), app: None}
     }
 
     pub fn initialize(&mut self, app: AppHandle) {
-        self.app = Some(Arc::new(app));
+        self.app = Some(app);
     }
     
-    pub fn add_new_engine(&mut self, path: String) {
+    pub fn add_unpiped_engine(&mut self, path: String) {
         let app = self.app.as_ref().unwrap().clone();
-        self.pipes.push(Engine::new(path, app));
+        self.unpiped_engines.push(UnpipedEngine::new(path));
     }
     
     pub fn find_best_move(&mut self) {
-        self.pipes[0].stdin.write_all("uci\n".to_string().as_bytes()).unwrap();
-        
+        //self.pipes[0].stdin.write_all("position startpos\ngo depth 5\n".to_string().as_bytes()).unwrap();
     }
     
-    pub fn drop_engine() {
-
+    pub fn drop_engine(&mut self) {
+        //self.pipes[0].stdin.write_all("quit\n".to_string().as_bytes()).unwrap();
     }
 }

@@ -9,11 +9,9 @@ listen("muz", (event) => {
   console.log(event);
 });
 
-invoke("initialize_engine_comminications", {});
-invoke("add_new_engine", {path: "../mybin"});
-invoke("get_best_move", {});
-
-
+invoke("initialize_cominication", {}).then(() => {
+  invoke("somethig", {path: "../mybin"})
+})
 
 const BOARD = document.getElementById("board")
 const FILES = ["a","b","c","d","e","f","g","h"]
