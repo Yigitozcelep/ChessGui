@@ -1,32 +1,7 @@
-'use strict';
+import { EngineController } from "./engine_controller.js";
 
 const invoke = window.__TAURI__.invoke
 const listen = window.__TAURI__.event.listen;
-const emit = window.__TAURI__.event.emit;
-
-listen("uci_listener", (event) => {
-  console.log("geliyor");
-  console.log(event);
-});
-
-listen("best_move_listener", (event) => {
-  console.log("best move");
-  console.log(event);
-})
-
-invoke("initialize_communication", {});
-
-setTimeout(() => {
-  invoke("add_unpiped_engine", {path: "../engine1"});
-}, 50)
-
-setTimeout(() => {
-  invoke("pipe_engine", {id: 0});
-}, 200)
-
-setTimeout(() => {
-  invoke("find_best_move", {id: 0});
-}, 500)
 
 const BOARD = document.getElementById("board")
 const FILES = ["a","b","c","d","e","f","g","h"]
