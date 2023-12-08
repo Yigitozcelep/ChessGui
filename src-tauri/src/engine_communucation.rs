@@ -5,6 +5,7 @@ use std::process::{Command, Stdio, ChildStdin};
 use std::thread;
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager};
+use serde::{Serialize, Deserialize};
 
 pub trait OutputFormeter: Send + Debug {
     fn read_new_line(&mut self, line: String);
@@ -22,6 +23,8 @@ impl OutputFormeter for CommandPerft {
     fn read_new_line(&mut self, line: String) {
         if line.trim() == "" {return; }
         if line.starts_with("Nodes searched") {
+            let num = line.split(" ").nth(2).unwrap();
+            self.data.insert("total".to_string(), num.to_string());
             self.is_complete = true;
             return;
         }
@@ -149,26 +152,30 @@ impl PipedEngine{
         }
     }
 
-    pub fn quit_search(&mut self) { self.stdin.write_all("quit\n".as_bytes()).unwrap(); }
-    pub fn find_best_move(&mut self, position: String) {
+    fn find_best_move(&mut self, position: String, time_handler: TimeHandler) {
         *self.output_formeter.lock().unwrap() = Box::new(CommandBestMove::new());
-        let input = format!("position {}\ngo depth 5\n", position);
+        let input = format!("position {}\ngo {}\n", position, time_handler.convert_string());
+        println!("{}", input);
         self.stdin.write_all(input.as_bytes()).unwrap();
     }
-    pub fn uci_test(&mut self) {
+    fn uci_test(&mut self) {
         *self.output_formeter.lock().unwrap() = Box::new(CommandUci::new());
         self.stdin.write_all("uci\n".as_bytes()).unwrap();
     }
 
-    pub fn search_perft(&mut self, position: String, depth: usize) {
+    fn search_perft(&mut self, position: String, depth: usize) {
         *self.output_formeter.lock().unwrap() = Box::new(CommandPerft::new());
         let input = format!("position {}\ngo perft {}\n", position, depth);
         self.stdin.write_all(input.as_bytes()).unwrap();
     }
 
-    pub fn unpiped(&mut self) -> UnpipedEngine {
-        self.stdin.write_all("quit\n".to_string().as_bytes()).unwrap();
+    fn unpiped(&mut self) -> UnpipedEngine {
+        self.stdin.write_all("quit\n".as_bytes()).unwrap();
         UnpipedEngine::new(self.path.clone(), self.id)
+    }
+
+    fn stop_search(&mut self) {
+        self.stdin.write_all("stop\n".as_bytes()).unwrap();
     }
 }
 
@@ -176,6 +183,33 @@ impl PipedEngine{
 enum EngineType {
     PipedEngine(PipedEngine),
     UnpipedEngine(UnpipedEngine),
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TimeHandler {
+    wtime    : Option<usize>,
+    btime    : Option<usize>,
+    winc     : Option<usize>,
+    binc     : Option<usize>,
+    depth    : Option<usize>,
+    nodes    : Option<usize>,
+    mate     : bool,
+    infinite : bool,
+}
+
+impl TimeHandler {
+    pub fn convert_string(&self) -> String {
+        let mut res = String::new();
+        if let Some(wtime) = self.wtime {res += &format!("wtime {} ", wtime);}
+        if let Some(btime) = self.btime {res += &format!("btime {} ", btime);}
+        if let Some(depth) = self.depth {res += &format!("depth {} ", depth);}
+        if let Some(nodes) = self.nodes {res += &format!("wtime {} ", nodes);}
+        if let Some(winc)  = self.winc  {res += &format!("winc {} ", winc);}
+        if let Some(binc)  = self.binc  {res += &format!("binc {} ", binc);}
+        if self.mate     { res += "mate ";    }
+        if self.infinite { res += "infinite ";}
+        res.trim().to_string()
+    }
 }
 
 pub struct EngineCommunications{
@@ -217,9 +251,9 @@ impl EngineCommunications {
         }
     }
     
-    pub fn find_best_move(&mut self, position: String, id: usize) {
+    pub fn find_best_move(&mut self, position: String, id: usize, time_handler: TimeHandler) {
         if let EngineType::PipedEngine(engine) = &mut self.engines[id] {
-            engine.find_best_move(position);
+            engine.find_best_move(position, time_handler);
         }
     }
     
@@ -231,6 +265,12 @@ impl EngineCommunications {
     pub fn search_perft(&mut self, position: String, depth: usize, id: usize) {
         if let EngineType::PipedEngine(engine) = &mut self.engines[id] {
             engine.search_perft(position, depth);
+        }
+    }
+
+    pub fn stop_operation(&mut self, id: usize) {
+        if let EngineType::PipedEngine(engine) = &mut self.engines[id] {
+            engine.stop_search();
         }
     }
 }
