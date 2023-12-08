@@ -89,6 +89,7 @@ impl OutputFormeter for CommandUci {
     }
     fn send_information(&self, app: &AppHandle, id: usize) {
         let listener = format!("uci_listener_id{}", id);
+        println!("{}", listener);
         app.emit_all(&listener, self.0).unwrap();
     }
 }
