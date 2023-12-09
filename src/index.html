@@ -31,6 +31,9 @@
     
     <div id="menu_container">
       <div id="settings"> </div>
+        <div id="engines_path_label">Engines Path: </div>
+        <input id="engines_path_entry" class="input_entry" type="text">
+        
         <div id="fen_label">Fen: </div>
         <input id="fen_input" class="input_entry" type="text">
         
@@ -47,14 +50,14 @@
 
       <div id="buttons"> 
 
-        <div id="EngineVsEngine" class="manuel_button build_board_type"> Engine Vs Engine </div>
-        <div id="PlayerVsPlayer" class="manuel_button build_board_type"> Player Vs Player </div>
-        <div id="PlayerVsEngine" class="manuel_button build_board_type"> Player Vs Engine </div>
-        <div id="TestEngine"     class="manuel_button build_board_type"> Test Engine </div>
-
+        <button id="EngineVsEngine" class="manuel_button build_board_type"> Engine Vs Engine </button>
+        <button id="PlayerVsPlayer" class="manuel_button build_board_type"> Player Vs Player </button>
+        <button id="PlayerVsEngine" class="manuel_button build_board_type"> Player Vs Engine </button>
+        <button id="TestEngine"     class="manuel_button build_board_type"> Test Engine </button>
+        
         <div id="color_options_of_player">
-          <div id="set_black_player_button" class="manuel_button">Black</div>
-          <div id="set_white_player_button" class="manuel_button color_is_clicked">White</div>
+          <button id="set_black_player_button" class="manuel_button">Black</button>
+          <button id="set_white_player_button" class="manuel_button color_is_clicked">White</button>
           
       </div>
     </div>

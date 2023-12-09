@@ -100,15 +100,14 @@ impl OutputFormeter for CommandUci {
 #[derive(Debug)]
 pub struct UnpipedEngine {
     path: String,
-    id: usize,
 }
 impl UnpipedEngine {
-    pub fn new(path: String, id: usize) -> Self { 
-        Self { path, id}
+    pub fn new(path: String) -> Self { 
+        Self { path }
     }
 
-    pub fn piped(&self, app: AppHandle) -> PipedEngine { 
-        PipedEngine::new(self.path.clone(), Arc::new(Mutex::new(Box::new(CommandNothing))), app, self.id)
+    pub fn piped(&self, app: AppHandle, id: usize) -> PipedEngine { 
+        PipedEngine::new(self.path.clone(), Arc::new(Mutex::new(Box::new(CommandNothing))), app, id)
     }
 }
 
@@ -117,7 +116,6 @@ pub struct PipedEngine {
     stdin: ChildStdin,
     output_formeter: Arc<Mutex<Box<dyn OutputFormeter>>>,
     path: String,
-    id: usize,
 }
 
 impl PipedEngine{
@@ -130,31 +128,29 @@ impl PipedEngine{
         
         let thread_formeter = output_formeter.clone();
         
-        let engine_id = id.clone();
         thread::spawn(move || {
-            println!("thread started {}", engine_id);
+            println!("thread started {}", id);
             let reader = BufReader::new(child.stdout.take().unwrap());
             for line in reader.lines() {
                 let mut cur_formeter = thread_formeter.lock().unwrap();
                 cur_formeter.read_new_line(line.unwrap());
                 if cur_formeter.is_data_collection_complete() { 
-                    cur_formeter.send_information(&app, engine_id);
+                    cur_formeter.send_information(&app, id);
                 }
             }
-            println!("thread end {}", engine_id);
+            println!("thread end {}", id);
         });
 
         Self {
             stdin: child.stdin.take().unwrap(),
             output_formeter,
             path,
-            id,
         }
     }
 
-    fn find_best_move(&mut self, position: String, time_handler: TimeHandler) {
+    fn find_best_move(&mut self, position: String, search_data: SearchData) {
         *self.output_formeter.lock().unwrap() = Box::new(CommandBestMove::new());
-        let input = format!("position {}\ngo {}\n", position, time_handler.convert_string());
+        let input = format!("position {}\ngo {}\n", position, search_data.convert_string());
         println!("{}", input);
         self.stdin.write_all(input.as_bytes()).unwrap();
     }
@@ -171,7 +167,7 @@ impl PipedEngine{
 
     fn unpiped(&mut self) -> UnpipedEngine {
         self.stdin.write_all("quit\n".as_bytes()).unwrap();
-        UnpipedEngine::new(self.path.clone(), self.id)
+        UnpipedEngine::new(self.path.clone())
     }
 
     fn stop_search(&mut self) {
@@ -186,7 +182,7 @@ enum EngineType {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct TimeHandler {
+pub struct SearchData {
     wtime    : Option<usize>,
     btime    : Option<usize>,
     winc     : Option<usize>,
@@ -197,7 +193,7 @@ pub struct TimeHandler {
     infinite : bool,
 }
 
-impl TimeHandler {
+impl SearchData {
     pub fn convert_string(&self) -> String {
         let mut res = String::new();
         if let Some(wtime) = self.wtime {res += &format!("wtime {} ", wtime);}
@@ -235,25 +231,25 @@ impl EngineCommunications {
         self.app = Some(app);
     }
     
-    pub fn add_unpiped_engine(&mut self, path: String, id: usize) {
-        self.engines.push(EngineType::UnpipedEngine(UnpipedEngine::new(path, id)));
+    pub fn add_unpiped_engine(&mut self, path: String) {
+        self.engines.push(EngineType::UnpipedEngine(UnpipedEngine::new(path)));
     }
 
     pub fn piped_engine(&mut self, id: usize) {
         if let EngineType::UnpipedEngine(engine) = &self.engines[id] {
-            self.engines[id] = EngineType::PipedEngine(engine.piped(self.app.clone().unwrap()));
+            self.engines[id] = EngineType::PipedEngine(engine.piped(self.app.clone().unwrap(), id));
         }
     }
-
+    
     pub fn uci_test(&mut self, id: usize) {
         if let EngineType::PipedEngine(engine) = &mut self.engines[id] {
             engine.uci_test();
         }
     }
     
-    pub fn find_best_move(&mut self, position: String, id: usize, time_handler: TimeHandler) {
+    pub fn find_best_move(&mut self, position: String, id: usize, search_data: SearchData) {
         if let EngineType::PipedEngine(engine) = &mut self.engines[id] {
-            engine.find_best_move(position, time_handler);
+            engine.find_best_move(position, search_data);
         }
     }
     

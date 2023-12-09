@@ -12,6 +12,7 @@ body {
 
 .manuel_button {
   background-color: rgb(100, 94, 94);
+  font:initial; /* reset the font */
   border-radius: 3px;
   border:1px solid #000000;
   cursor: pointer;

@@ -5,31 +5,21 @@ use tauri::{State, AppHandle, Builder};
 use std::sync::Mutex;
 
 pub mod engine_communucation;
-use crate::engine_communucation::{EngineCommunications, TimeHandler};
+use crate::engine_communucation::{EngineCommunications, SearchData};
 
 pub struct EngineCommunicationsState(Mutex<EngineCommunications>);
 
 
 #[tauri::command]
-fn get_engine_names() -> Vec<String> {
-    let mut file_names = Vec::new();
-    for entry in std::fs::read_dir("./src/engines").unwrap() {
-        let file_name = entry.unwrap().file_name();
-        file_names.push(file_name.to_str().map(|s| s.to_string()).unwrap());
-    }
-    file_names
+fn add_unpiped_engine(engine_state: State<'_, EngineCommunicationsState>, path: String) {
+    let mut engine_comminucation = engine_state.0.lock().expect("Failed to lock engine state");
+    engine_comminucation.add_unpiped_engine(path);
 }
 
 #[tauri::command]
-fn add_unpiped_engine(engine_state: State<'_, EngineCommunicationsState>, path: String, id: usize) {
+fn find_best_move(engine_state: State<'_, EngineCommunicationsState>, id: usize, search_data: SearchData) {
     let mut engine_comminucation = engine_state.0.lock().expect("Failed to lock engine state");
-    engine_comminucation.add_unpiped_engine(path, id);
-}
-
-#[tauri::command]
-fn find_best_move(engine_state: State<'_, EngineCommunicationsState>, id: usize, time_handler: TimeHandler) {
-    let mut engine_comminucation = engine_state.0.lock().expect("Failed to lock engine state");
-    engine_comminucation.find_best_move("startpos".to_string(), id, time_handler);
+    engine_comminucation.find_best_move("startpos".to_string(), id, search_data);
 }
 
 #[tauri::command] 
@@ -73,7 +63,6 @@ fn main() {
     Builder::default()
         .manage(EngineCommunicationsState(Mutex::new(EngineCommunications::new())))
         .invoke_handler(tauri::generate_handler![
-            get_engine_names,
             initialize_communication,
             find_best_move,
             add_unpiped_engine,
