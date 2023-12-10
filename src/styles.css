@@ -10,6 +10,46 @@ body {
   background-color: rgb(135, 124, 124);
 }
 
+.engine_slider {
+  outline: 0.4vw solid #000000;
+  cursor: pointer;
+  font-size: 2vw;
+  background-color: rgb(196, 184, 184);
+  border-radius: 3px;
+}
+
+
+.engine_list {
+  border: 0.2vw solid black;
+  cursor: pointer;
+  height: 4vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2vw;
+}
+
+.engine_list:hover {
+  background-color: rgb(178, 162, 162);
+}
+
+#move_generator_engine_label {
+  width: 22vw;
+  height: 4vw;
+  position: absolute;
+  font-size: 3vw;
+  left: 5vw;
+  top: 10vw;
+}
+
+#move_generator_div {
+  width: 16vw;
+  position: absolute;
+  left: 26.5vw;
+  top: 10vw;
+  z-index: 3;
+}
+
 .manuel_button {
   background-color: rgb(100, 94, 94);
   font:initial; /* reset the font */
@@ -19,6 +59,22 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+#save_engine_container {
+  position: absolute;
+  width: 15vw;
+  top: 10vw;
+  left: 46vw;
+  font-size: 3vw;
+}
+
+#delete_engine_container {
+  position: absolute;
+  width: 15vw;
+  top: 10vw;
+  left: 65vw;
+  font-size: 3vw;
 }
 
 .manuel_button:hover {

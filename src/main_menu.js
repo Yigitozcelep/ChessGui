@@ -1,6 +1,7 @@
-import { searchData } from "./engine_controller.js"
+import { EngineController, searchData } from "./engine_controller.js"
 
-const dialog =  window.__TAURI__.dialog;
+const save =  window.__TAURI__.dialog.save;
+
 
 async function Something() {
     const filePath = await dialog.open({ multiple: false, directory: false });
@@ -9,18 +10,41 @@ async function Something() {
     } 
 }
 
+const SetBlackPlayerButton     = document.getElementById("set_black_player_button");
+const setWhitePlayerButton     = document.getElementById("set_white_player_button");
+const FenInput                 = document.getElementById('fen_input');
+const WincInput                = document.getElementById("white_time_plus_entry");
+const BincInput                = document.getElementById("black_time_plus_entry");
+const WtimeInput               = document.getElementById("white_time_entry");
+const BtimeInput               = document.getElementById("black_time_entry");
+const MoveGeneratorDiv         = document.getElementById("move_generator_div");
+const SaveEngineDiv            = document.getElementById("save_engine");
 
-
-const SetBlackPlayerButton = document.getElementById("set_black_player_button");
-const setWhitePlayerButton = document.getElementById("set_white_player_button");
-const FenInput             = document.getElementById('fen_input');
-const WincInput            = document.getElementById("white_time_plus_entry");
-const BincInput            = document.getElementById("black_time_plus_entry");
-const WtimeInput           = document.getElementById("white_time_entry");
-const BtimeInput           = document.getElementById("black_time_entry");
-
+SaveEngineDiv.onclick        = () => EngineController.saveEngine();
 setWhitePlayerButton.onclick = () => setColorOption("white")
 SetBlackPlayerButton.onclick = () => setColorOption("black")
+
+
+const PushEnginesNamesToDiv = (div, topName) => {
+    div.innerHTML = "";
+    for (let name of ["SomeEngine", "MoreEngine", "EngineVer1", "EngineVersdadssion2"]) {
+        const listItem = document.createElement("li");
+        listItem.textContent = name;
+        listItem.classList.add("engine_list");
+        listItem.onclick = () => {
+            div.innerHTML = "";
+            const topName = document.createElement("li");
+            topName.classList.add("engine_list");
+            topName.id = topName;
+            topName.innerHTML = name;
+            MoveGeneratorDiv.appendChild(topName);
+            topName.onclick = () => PushEnginesNamesToDiv(div, topName);
+        }
+        MoveGeneratorDiv.appendChild(listItem);
+    }
+}
+
+document.getElementById("move_generator_top_name").onclick = () => PushEnginesNamesToDiv(MoveGeneratorDiv, "move_generator_top_name")
 
 const MainMenu = {
     observers: [],

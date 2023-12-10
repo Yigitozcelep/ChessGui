@@ -1,10 +1,11 @@
-const invoke = window.__TAURI__.invoke
-const listen = window.__TAURI__.event.listen;
-const baseDirectory = window.__TAURI__.path.BaseDirectory;
-const readDir = window.__TAURI__.fs.readDir;
-const createDir = window.__TAURI__.fs.createDir;
-const getAppDataDir = window.__TAURI__.path.appDataDir;
 
+const invoke         = window.__TAURI__.invoke
+const listen         = window.__TAURI__.event.listen;
+const baseDirectory  = window.__TAURI__.path.BaseDirectory;
+const readDir        = window.__TAURI__.fs.readDir;
+const createDir      = window.__TAURI__.fs.createDir;
+const getAppDataDir  = window.__TAURI__.path.appDataDir;
+const tauriOpen      = window.__TAURI__.dialog.open;
 
 
 async function readEngines() {
@@ -37,7 +38,7 @@ class searchData {
 }
 
 const EngineController = {
-    _engines: [],
+    _engines: ["Engine1", "Engine2", "SomeLongNameEngine"],
 
     getEngineNames() {return this._engines},
 
@@ -76,7 +77,13 @@ const EngineController = {
 
     async unpipe(id) { invoke("drop_pipe",   {id: id}) },
 
-    async pipe(id)   { invoke("pipe_engine", {id: id}) }
+    async pipe(id)   { invoke("pipe_engine", {id: id}) },
+
+    async saveEngine() {
+        const sourcePath = await tauriOpen();
+        const targetPath = await getAppDataDir();
+        invoke("copy_executable", {sourcePath: sourcePath, targetPath: targetPath});
+    }
 }
 
 export { EngineController, searchData };

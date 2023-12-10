@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::{State, AppHandle, Builder};
-use std::sync::Mutex;
+use std::{sync::Mutex, path::Path};
 
 pub mod engine_communucation;
 use crate::engine_communucation::{EngineCommunications, SearchData};
@@ -58,6 +58,13 @@ fn stop_operation(engine_state: State<'_, EngineCommunicationsState>, id: usize)
     engine_comminucation.stop_operation(id);
 }
 
+#[tauri::command]
+fn copy_executable(source_path: String, target_path: String) {
+    let engine_name = Path::new(&source_path).file_name().unwrap();
+    let target_path = Path::new(&target_path).join("ChessEngines").join(&engine_name);
+    std::fs::copy(&source_path, &target_path).unwrap();
+}
+
 fn main() {
     // Initialize your Tauri application with the state
     Builder::default()
@@ -71,6 +78,7 @@ fn main() {
             uci_test,
             search_perft,
             stop_operation,
+            copy_executable,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
