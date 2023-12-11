@@ -17,17 +17,17 @@ const WincInput                = document.getElementById("white_time_plus_entry"
 const BincInput                = document.getElementById("black_time_plus_entry");
 const WtimeInput               = document.getElementById("white_time_entry");
 const BtimeInput               = document.getElementById("black_time_entry");
-const MoveGeneratorDiv         = document.getElementById("move_generator_div");
+const MainEngineDiv            = document.getElementById("main_engine_div");
 const SaveEngineDiv            = document.getElementById("save_engine");
+const DeleteEngineDiv          = document.getElementById("delete_engine_container");
 
 SaveEngineDiv.onclick        = () => EngineController.saveEngine();
 setWhitePlayerButton.onclick = () => setColorOption("white")
 SetBlackPlayerButton.onclick = () => setColorOption("black")
 
-
-const PushEnginesNamesToDiv = (div, topName) => {
+const PushEnginesNamesToDiv = (div) => {
     div.innerHTML = "";
-    for (let name of ["SomeEngine", "MoreEngine", "EngineVer1", "EngineVersdadssion2"]) {
+    for (let name of EngineController.getEngineNames()) {
         const listItem = document.createElement("li");
         listItem.textContent = name;
         listItem.classList.add("engine_list");
@@ -35,16 +35,16 @@ const PushEnginesNamesToDiv = (div, topName) => {
             div.innerHTML = "";
             const topName = document.createElement("li");
             topName.classList.add("engine_list");
-            topName.id = topName;
             topName.innerHTML = name;
-            MoveGeneratorDiv.appendChild(topName);
-            topName.onclick = () => PushEnginesNamesToDiv(div, topName);
+            div.appendChild(topName);
+            topName.onclick = () => PushEnginesNamesToDiv(div);
         }
-        MoveGeneratorDiv.appendChild(listItem);
+        div.appendChild(listItem);
     }
 }
 
-document.getElementById("move_generator_top_name").onclick = () => PushEnginesNamesToDiv(MoveGeneratorDiv, "move_generator_top_name")
+document.getElementById("main_engine_top_name").onclick = () => PushEnginesNamesToDiv(MainEngineDiv)
+DeleteEngineDiv.onclick = () => EngineController.deleteEngine() 
 
 const MainMenu = {
     observers: [],
@@ -56,7 +56,7 @@ const MainMenu = {
         for (let observer of this.observers) observer.notify(this.getClickedEvent());
         this.menuDiv.style.visibility = "hidden";
     },
-    update(event) { this.menuDiv.style.visibility = "visible"; }
+    makeVisible() { this.menuDiv.style.visibility = "visible"; }
 }
 
 MainMenu.menuDiv.onclick = () => { MainMenu.clickMainMenu() }
@@ -79,8 +79,7 @@ class HumanPlayer {
 class BoardBuilder {
     constructor() {
         this.searchData = new searchData().setWtime(getWtime()).setBtime(getBtime()).setWinc(getWinc()).setBinc(getBinc());
-        this.players = [];
-        this.engineForGetMove               = null;  // bunu eklicen
+        this.players                        = [new HumanPlayer(), new HumanPlayer()];
         this.isFlippedBoard                 = false;
         this.pieceWidth                     = 6;
         this.pieceHeight                    = 6;
@@ -93,11 +92,11 @@ class BoardBuilder {
         this.opacityOfNoneTurnPlayerTimeDiv = "0.7";
     }
 
-    addPlayer(player)      {  this.players.push(player); return this;  }
-    setPieceWidth(width)   {  this.pieceWidth  = width;  return this;  }
-    setPieceHeight(height) {  this.pieceHeight = height; return this;  }
-    setBoardLeft(left)     {  this.boardLeft   = left;   return this;  }
-    setBoardTop(top)       {  this.boardTop    = top;    return this;  }
+    addEnginePlayer(player, index) {  this.players[index] = player; return this;  }
+    setPieceWidth(width)           {  this.pieceWidth     = width;  return this;  }
+    setPieceHeight(height)         {  this.pieceHeight    = height; return this;  }
+    setBoardLeft(left)             {  this.boardLeft      = left;   return this;  }
+    setBoardTop(top)               {  this.boardTop       = top;    return this;  }
     build() {}
 }
 
@@ -108,7 +107,7 @@ const setColorOption = (color) => {
     else SetBlackPlayerButton.classList.add("color_is_clicked");
 }
 
-const getColor  = () => setWhitePlayerButton.classList.contains("color_is_clicked") ? "white" : "black"
+const getColor  = () => setWhitePlayerButton.classList.contains("color_is_clicked") ? Colors.white: Colors.black
 const getFen    = () => FenInput.value.trim()
 const getWinc   = () => WincInput.value.trim()
 const getBinc   = () => BincInput.value.trim()

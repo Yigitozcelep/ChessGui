@@ -33,16 +33,16 @@ body {
   background-color: rgb(178, 162, 162);
 }
 
-#move_generator_engine_label {
+#main_engine_label {
   width: 22vw;
   height: 4vw;
   position: absolute;
   font-size: 3vw;
-  left: 5vw;
+  left: 8vw;
   top: 10vw;
 }
 
-#move_generator_div {
+#main_engine_div {
   width: 16vw;
   position: absolute;
   left: 26.5vw;
@@ -75,6 +75,7 @@ body {
   top: 10vw;
   left: 65vw;
   font-size: 3vw;
+  z-index: 3;
 }
 
 .manuel_button:hover {

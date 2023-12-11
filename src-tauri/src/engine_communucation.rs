@@ -181,6 +181,7 @@ enum EngineType {
     UnpipedEngine(UnpipedEngine),
 }
 
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SearchData {
     wtime    : Option<usize>,
@@ -221,7 +222,6 @@ impl Debug for EngineCommunications {
                 .finish()
     }
 }
-
 
 
 impl EngineCommunications {
@@ -270,5 +270,12 @@ impl EngineCommunications {
         if let EngineType::PipedEngine(engine) = &mut self.engines[id] {
             engine.stop_search();
         }
+    }
+
+    pub fn delete_engine(&mut self, id: usize) {
+        if let EngineType::PipedEngine(engine) = &mut self.engines[id] {
+            engine.unpiped();
+        }
+        self.engines.remove(id);
     }
 }
