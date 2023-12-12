@@ -1,81 +1,82 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Page Title</title>
-    <link rel="stylesheet" type="text/css" href="./styles.css">
+  <title>Page Title</title>
+  <link rel="stylesheet" type="text/css" href="./styles.css">
 </head>
+
 <body>
-    
+  <div id="menu_button" class="manuel_button" style="visibility: hidden;">Go Back Main Menu</div>
   <div id="master">
     <div id="board_container" style="visibility: hidden;">
-      <div id="go_back_main_menu" class="manuel_button">Go Back Main Menu</div>
-      <div id="winner_label"></div>
-      <div id="eval_res"></div>
-      <img id="board_img" src="./svgs/board.svg">
-      <div id="board"></div>
-      <img src="./svgs/left_arrow.svg" id="undo_button" class="board_buttons">
-      <img src="./svgs/resign.svg" id="resign_button" class="board_buttons">
-      <div id="time_container"> 
-        <div id="white_time_container"> 
-          <div id="board_white_time_div" class="board_time_div"></div>
-          <img src="svgs/person.svg" id="white_player_time_svg" class="white_time_svg">
-          <img src="svgs/robot.svg"  id="white_robot_time_svg"  class="white_time_svg">
+      <div id="winner_label" style="visibility: hidden;"></div>
+      <div id="eval_res" style="visibility: hidden;"></div>
+      <img id="board_img" style="visibility: hidden;" src="./svgs/board.svg">
+      <div id="board">
+        <div id="pieces_container"></div>
+        <div id="square_container"></div>
+      </div>
+      <img src="./svgs/left_arrow.svg" id="undo_button" class="board_buttons" style="visibility: hidden;">
+      <img src="./svgs/resign.svg" id="resign_button" class="board_buttons" style="visibility: hidden;">
+      <div id="time_container" style="visibility: hidden;">
+        <div id="white_time_container" style="visibility: hidden;">
+          <div id="board_white_time_div" class="board_time_div" style="visibility: hidden;"></div>
+          <img src="svgs/person.svg" id="white_player_time_svg" class="white_time_svg" style="visibility: hidden;">
+          <img src="svgs/robot.svg" id="white_robot_time_svg" class="white_time_svg" style="visibility: hidden;">
         </div>
-        <div id="black_time_container"> 
-          <div id="board_black_time_div" class="board_time_div"></div>
-          <img src="svgs/person.svg" id="black_player_time_svg" class="black_time_svg">
-          <img src="svgs/robot.svg"  id="black_robot_time_svg"  class="black_time_svg">
+        <div id="black_time_container" style="visibility: hidden;">
+          <div id="board_black_time_div" class="board_time_div" style="visibility: hidden;"></div>
+          <img src="svgs/person.svg" id="black_player_time_svg" class="black_time_svg" style="visibility: hidden;">
+          <img src="svgs/robot.svg" id="black_robot_time_svg" class="black_time_svg" style="visibility: hidden;">
         </div>
       </div>
     </div>
-    
+
     <div id="menu_container">
       <div id="settings"> </div>
-        <div id="main_engine_label">Main Engine: </div>
-          <div id="main_engine_div" class="engine_slider">
-            <li id="main_engine_top_name" class="engine_list">Stockfish</li>
-          </div>
-        </div>
-        
-        <div id="save_engine_container" class="engine_slider"> 
-          <li id="save_engine" class="engine_list">Save Engine</li>
-        </div>
-        
-        <div id="delete_engine_container" class="engine_slider">
-          <li id="delete_engine" class="engine_list">Delete Engine</li>
-        </div>
-        
-        </div>
-        <div id="fen_label">Fen: </div>
-        <input id="fen_input" class="input_entry" type="text">
-        
-        <div id="white_time_label" class="time_label">White Time: </div>
-        <input id="white_time_entry" class="time_entry" type="text">
-        <div id="black_time_label" class="time_label">Black Time: </div>
-        <input id="black_time_entry" class="time_entry" type="text">
-        
-        <div id="white_time_plus_label" class="time_label">White Time Plus: </div>
-        <input id="white_time_plus_entry" class="time_entry" type="text">
-        
-        <div id="black_time_plus_label" class="time_label">Black Time Plus: </div>
-        <input id="black_time_plus_entry" class="time_entry" type="text">
+      <div id="main_engine_label">Main Engine: </div>
+      <div id="main_engine_div" class="engine_slider">
+        <li id="main_engine_top_name" class="engine_list">Stockfish</li>
+      </div>
 
-      <div id="buttons"> 
+      <div id="save_engine_container" class="engine_slider">
+        <li id="save_engine" class="engine_list">Save Engine</li>
+      </div>
+
+      <div id="delete_engine_container" class="engine_slider">
+        <li id="delete_engine" class="engine_list">Delete Engine</li>
+      </div>
+
+      <div id="fen_label">Fen: </div>
+      <input id="fen_input" class="input_entry" type="text">
+
+      <div id="white_time_label" class="time_label">White Time: </div>
+      <input id="white_time_entry" class="time_entry" type="text">
+      <div id="black_time_label" class="time_label">Black Time: </div>
+      <input id="black_time_entry" class="time_entry" type="text">
+
+      <div id="white_time_plus_label" class="time_label">White Time Plus: </div>
+      <input id="white_time_plus_entry" class="time_entry" type="text">
+
+      <div id="black_time_plus_label" class="time_label">Black Time Plus: </div>
+      <input id="black_time_plus_entry" class="time_entry" type="text">
+
+      <div id="buttons">
 
         <button id="EngineVsEngine" class="manuel_button build_board_type"> Engine Vs Engine </button>
         <button id="PlayerVsPlayer" class="manuel_button build_board_type"> Player Vs Player </button>
         <button id="PlayerVsEngine" class="manuel_button build_board_type"> Player Vs Engine </button>
-        <button id="TestEngine"     class="manuel_button build_board_type"> Test Engine </button>
-        
+        <button id="TestEngine" class="manuel_button build_board_type"> Test Engine </button>
+
         <div id="color_options_of_player">
           <button id="set_black_player_button" class="manuel_button">Black</button>
           <button id="set_white_player_button" class="manuel_button color_is_clicked">White</button>
-          
+        </div>
       </div>
     </div>
-    </div>
-
   </div>
   <script src="./main_menu.js" type="module"></script>
 </body>
+
 </html>
