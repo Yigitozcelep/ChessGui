@@ -1,5 +1,5 @@
 import { EngineController, searchData } from "./engine_controller.js"
-import { boardStates } from "./board.js";
+import { BoardConfigs, BoardController, GameState, BoardEvents, Colors } from "./board.js";
 
 const SetBlackPlayerButton     = document.getElementById("set_black_player_button");
 const setWhitePlayerButton     = document.getElementById("set_white_player_button");
@@ -22,7 +22,7 @@ SaveEngineDiv.onclick        = () => EngineController.saveEngine();
 setWhitePlayerButton.onclick = () => setColorOption("white")
 SetBlackPlayerButton.onclick = () => setColorOption("black")
 PlayerVsEngineButton.onclick = () => {
-    boardStates.initialize()
+    new BoardController(new BoardConfigs(), new GameState(), new BoardEvents(), "");
     MenuContainer.style.visibility = "hidden";
 };
 
@@ -62,11 +62,6 @@ const MenuButtonController = {
 
 MenuButton.onclick = () => { MenuButtonController.clickMainMenu() }
 
-const Colors = {
-    white: "white",
-    black: "black",
-}
-
 const setColorOption = (color) => {
     SetBlackPlayerButton.classList.remove("color_is_clicked");
     setWhitePlayerButton.classList.remove("color_is_clicked");
@@ -81,4 +76,4 @@ const getBinc   = () => BincInput.value.trim()
 const getWtime  = () => WtimeInput.value.trim();
 const getBtime  = () => BtimeInput.value.trim();
 
-export { MenuButtonController, Colors }
+export { MenuButtonController }
