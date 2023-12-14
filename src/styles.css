@@ -186,7 +186,10 @@ body {
 
 .grabbable { cursor: grab; }
 
-.grabbing { cursor: grabbing; }
+.grabbing { 
+  cursor: grabbing;
+  z-index: 5;
+ }
 
 .target_square {
   width: 8.94vw;

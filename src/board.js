@@ -4,9 +4,9 @@ import { MenuButtonController } from "./main_menu.js";
 const BOARD_CONTAINER = document.getElementById("board_container");
 const PIECES_DIV      = document.getElementById("pieces_container");
 const SQUARES_DIV     = document.getElementById("square_container");
-
 const FILES           = ["a","b","c","d","e","f","g","h"]
 const BoardImg        = document.getElementById("board_img") ;
+const invoke            = window.__TAURI__.invoke
 
 const Colors = {
     white: "white",
@@ -39,8 +39,6 @@ const letterToPiece = {
 
 const isNumeric = (value) => /^-?\d+$/.test(value)
 
-const pxToVw = (px) => ((px / window.innerWidth) * 100) + "vw"
-
 const getSquareName = (rankIndex, fileIndex) => FILES[fileIndex] + (rankIndex + 1);
 
 const getRankIndexAndFileIndex = (square) => [Math.floor(square / 8), square % 8]
@@ -62,57 +60,95 @@ class TimeController {
     }
 }
 
+class Pieces {
+    constructor() {
+        this._pieces = {};
+    }
+    addPieceToList(piece) { this._pieces[piece.squareName] = piece; }
+    resetPieces()         { this._pieces = {};                      }
+    /**
+     * @param {Move[]} moves 
+     * @param {BoardController} boardController
+     */
+    createPieces(moves, boardController) {
+        this._pieces = {};
+        let square = 56;
+        const piecesLayout = boardController.gameState.getPiecesLayout();
+        for (let i = 0; i < piecesLayout.length; i++) {
+          if (isNumeric(piecesLayout[i])) { square += parseInt(piecesLayout[i]); }
+          else if (piecesLayout[i] == "/") square += -16;
+          else {
+            const pieceName = letterToPiece[piecesLayout[i]]
+            const [rankIndex, fileIndex] = getRankIndexAndFileIndex(square);
+            this.addPieceToList(new Piece("", pieceName, rankIndex, fileIndex, boardController))
+            square += 1;
+          }
+       }
+    }
+    /**
+     * @returns {Piece[]}
+     */
+    getAllPieces() { return Array.from(Object.values(this._pieces)); }
+}
+
 class Piece {
-    constructor(moves, fullName, rankIndex, fileIndex) {
+    /**
+     * @param {Move[]} moves 
+     * @param {BoardController} boardController 
+     */
+    constructor(moves, fullName, rankIndex, fileIndex, boardController) {
         this.moves       = moves;
         this.rankIndex   = rankIndex;
         this.fileIndex   = fileIndex;
-        this.img         = document.createElement("img");
         this.squareName  = getSquareName(rankIndex, fileIndex);
+        this.fullName    = fullName;
         this.color       = fullName.split("_")[0]
         this.pieceName   = fullName.split("_")[1];
-        this.fullName    = fullName;
+        this.initialLeft = boardController.boardConfigs.getPieceLeft(fileIndex);
+        this.initialTop  = boardController.boardConfigs.getPieceTop(rankIndex);
         this._isGrabbing = false;
-        this.initialLeft = 0;
-        this.initialTop  = 0;
+        this.div         = document.createElement("img");
+        this.initializeDiv(boardController);
     }
-    setInitialLeft(left) {  this.initialLeft = left; }
-    setInitialTop(top)   {  this.initialTop  = top;  }
+    
+    /**
+     * @param {BoardController} boardController
+     */
+    initializeDiv(boardController) {
+        this.div.src      = "./svgs/" + this.fullName + ".svg";
+        this.div.id           = this.fullName;
+        this.div.style.left   = boardController.boardConfigs.getPieceLeft(this.fileIndex);
+        this.div.style.top    = boardController.boardConfigs.getPieceTop(this.rankIndex);
+        this.div.style.width  = boardController.boardConfigs.getPieceSize();
+        this.div.style.height = boardController.boardConfigs.getPieceSize();
+        this.div.classList.add("piece");
+        if (true && this.color == boardController.gameState.getColor()) {
+            this.div.classList.add("grabbable");
+            this.div.addEventListener("click", (e) => { boardController.pieceClicked(e, this); })
+        }
+        PIECES_DIV.appendChild(this.div);
+    }
 
+    isGrabbingPiece()    {  return this._isGrabbing; }
     resetPosition() { 
-        this.img.style.left = this.initialLeft; 
-        this.img.style.top  = this.initialTop;
+        this.div.style.left = this.initialLeft; 
+        this.div.style.top  = this.initialTop;
     }
 
-    /**
-     * @param {BoardEvents} boardEvents 
-     */
-    grabPiece(boardEvents) {
+    grabPiece() {
         this._isGrabbing = true;
-        this.img.classList.add("grabbing");
-        boardEvents.setClickPiece(this);
+        this.div.classList.add("grabbing");
     }
 
-    /**
-     * @param {BoardEvents} boardEvents 
-     */
-    removeGrab(boardEvents) {
+    removeGrab() {
         this._isGrabbing = false;
-        this.img.classList.remove("grabbing")
-        boardEvents.removeClickedPiece()
+        this.div.classList.remove("grabbing")
     }
-    /**
-     * @param {BoardEvents} boardEvents 
-     */
-    clicked(boardEvents) {
-        if (!this._isGrabbing) this.grabPiece(boardEvents)
-        else this.removeGrab(boardEvents);
-    } 
 }
-
 
 class BoardConfigs {
     constructor(isFlippedBoard=false, boardLeft=10, boardTop=9, boardSize=72) {
+        this.unit              = "vw";
         this.isFlippedBoard    = isFlippedBoard;
         this._boardLeft        = boardLeft;
         this._boardTop         = boardTop;
@@ -120,64 +156,38 @@ class BoardConfigs {
         this._squareSize       = this._boardSize  / 8;
         this._pieceSize        = this._squareSize * 0.70;
     }
-    
-    getBoardLeft()                { return this._boardLeft  + "vw";                 }
-    getBoardTop()                 { return this._boardTop   + "vw";                 }
-    getBoardSize()                { return this._boardSize  + "vw";                 }
-    getSquareSize()               { return this._squareSize + "vw";                 }
-    getPieceSize()                { return this._pieceSize  + "vw";                 }
-    getSquareLeft(fileIndex)      { return this._getSquareLeftNum(fileIndex) + "vw";                                               }
-    getSquareTop(rankIndex)       { return this._getSquareTopNum(rankIndex)  + "vw";                                               }
-    _getSquareLeftNum(fileIndex)  { return this._boardLeft + (this._squareSize * fileIndex);                                       }
-    _getSquareTopNum(rankIndex)   { return this._boardTop  + (this._squareSize * (7 - rankIndex));                                 }
-    getPieceLeft(fileIndex)       { return (this._getSquareLeftNum(fileIndex) + (this._squareSize - this._pieceSize) / 2) + "vw";  }
-    getPieceTop(rankIndex)        { return (this._getSquareTopNum(rankIndex)  + (this._squareSize - this._pieceSize) / 2) + "vw";  }
-    
-    initializeSquares() {
-        for (let fileIndex = 7; fileIndex >= 0; fileIndex--) {
-            for (let rankIndex = 7; rankIndex >= 0; rankIndex--) {
-                const squareName = getSquareName(rankIndex, fileIndex);
-                const squareDiv = document.createElement("div");
-                squareDiv.classList.add("square");
-                squareDiv.id = squareName;
-                squareDiv.style.height = squareDiv.style.width = this.getSquareSize();
-                squareDiv.style.left   = this.getSquareLeft(fileIndex);
-                squareDiv.style.top    = this.getSquareTop(rankIndex);
-                SQUARES_DIV.appendChild(squareDiv);
-            }
-        }
+
+    pxToUnitNum(pxNum)            { return (pxNum / window.innerWidth) * 100             }
+    getBoardLeft()                { return this._boardLeft  + this.unit;                 }
+    getBoardTop()                 { return this._boardTop   + this.unit;                 }
+    getBoardSize()                { return this._boardSize  + this.unit;                 }
+    getSquareSize()               { return this._squareSize + this.unit;                 }
+    getPieceSize()                { return this._pieceSize  + this.unit;                 }
+    getSquareLeft(fileIndex)      { return this._getSquareLeftNum(fileIndex) + this.unit;                                               }
+    getSquareTop(rankIndex)       { return this._getSquareTopNum(rankIndex)  + this.unit;                                               }
+    _getSquareLeftNum(fileIndex)  { return this._boardLeft + (this._squareSize * fileIndex);                                           }
+    _getSquareTopNum(rankIndex)   { return this._boardTop  + (this._squareSize * (7 - rankIndex));                                     }
+    getPieceLeft(fileIndex)       { return (this._getSquareLeftNum(fileIndex) + (this._squareSize - this._pieceSize) / 2) + this.unit;  }
+    getPieceTop(rankIndex)        { return (this._getSquareTopNum(rankIndex)  + (this._squareSize - this._pieceSize) / 2) + this.unit;  }
+
+    /**
+     * @param {MouseEvent} e 
+     * @param {Piece} piece 
+     */
+    setPieceCenterOfTheMouse(e, piece) {
+        piece.div.style.left = (this.pxToUnitNum(e.pageX) - this._pieceSize / 2) + this.unit;
+        piece.div.style.top  = (this.pxToUnitNum(e.pageY) - this._pieceSize / 2) + this.unit;
     }
-    
     /**
      * @param {BoardController} boardController - Array of Piece objects.
      */
-    configurePiecesDiv(boardController) {
-        for (const piece of boardController.gameState.getAllPieces()) {
-            piece.setInitialLeft(this.getPieceLeft(piece.fileIndex));
-            piece.setInitialTop(this.getPieceTop(piece.rankIndex));
-            piece.img.src          = "./svgs/" + piece.fullName + ".svg";
-            piece.img.id           = piece.fullName;
-            piece.img.style.left   = this.getPieceLeft(piece.fileIndex);
-            piece.img.style.top    = this.getPieceTop(piece.rankIndex);
-            piece.img.style.width  = this.getPieceSize();
-            piece.img.style.height = this.getPieceSize();
-            piece.img.classList.add("piece");
-            if (true && piece.color == boardController.gameState.getColor()) {
-                piece.img.classList.add("grabbable");
-                piece.img.addEventListener("click", () => piece.clicked(boardController.boardEvents) )
-            }
-            PIECES_DIV.appendChild(piece.img);
-        }
-    }
-    
-    initialize() {
+    initialize(boardController) {
         BOARD_CONTAINER.style.visibility = "visible";
         BoardImg.style.visibility        = "visible";
         BoardImg.style.width  = this.getBoardSize();
         BoardImg.style.height = this.getBoardSize();
         BoardImg.style.left   = this.getBoardLeft();
         BoardImg.style.top    = this.getBoardTop();
-        this.initializeSquares();
     }
 
     terminate() {
@@ -186,47 +196,112 @@ class BoardConfigs {
         SQUARES_DIV.innerHTML = "";
         PIECES_DIV.innerHTML  = "";
     }
+}
+
+class Move {
+    /**
+    * @param {string} move 
+    * @param {HTMLElement} targetDiv 
+    */
+    constructor(move, targetDiv) {
+        this.name             = move;        
+        this.sourceSquareName = move.slice(0, 2);
+        this.targetSquareName = move.slice(2, 4);
+        this.targetSquareDiv  = document.getElementById(this.targetSquareName);
+    }
+}
+
+class Squares {
+
+    constructor(boardConfig) {
+        this._squares = {};
+    }
+
+    getSquare() {}
     
+    /**
+     * @param {BoardConfigs} boardConfig 
+     */
+    initialize(boardConfig) {
+        for (let rankIndex = 0; rankIndex < 8; rankIndex++) {
+            for (let fileIndex = 0; fileIndex < 8; fileIndex++) {
+                this.addSquareToList(new Square(rankIndex, fileIndex, boardConfig));
+            }
+        }
+    }
+    addSquareToList(square) {this._squares[square.name] = square }
+}
+
+class Square {
+    /**
+     * @param {BoardConfigs} boardConfig 
+     */
+    constructor(rankIndex, fileIndex, boardConfig) {
+        this.rankIndex      = rankIndex;
+        this.fileIndex      = fileIndex;
+        this.name           = getSquareName(rankIndex, fileIndex);
+        this.isPieceOnTopOf = false;
+        this.isTargetSquare = false;
+        this.div            = document.createElement("div");
+        this.initializeDiv(boardConfig);
+    }
+
+    /**
+     * @param {BoardConfigs} boardConfig 
+     */
+    initializeDiv(boardConfig) {
+        this.div.classList.add("square");
+        this.div.style.height = this.div.style.width = boardConfig.getSquareSize();
+        this.div.style.left   = boardConfig.getSquareLeft(this.fileIndex);
+        this.div.style.top    = boardConfig.getSquareTop(this.rankIndex);
+        SQUARES_DIV.appendChild(this.div);
+    }
 }
 
 class GameState {
-    constructor() {
+    constructor(boardConfig) {
         this._fen       = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         this._turn      = 0;
         this._moveCount = 0;
-        this._pieces    = {};
+        this._pieces    = new Pieces();
+        this._squares   = new Squares();
     }
+
     setFen(fen)                        { this._fen  = fen;                               }
     setTurn(turn)                      { this._turn = turn;                              }
     getFen()                           { return this._fen;                               }
     getTurnIndex()                     { return this._turn;                              }
     getPiecesLayout()                  { return this.getFen().split(" ")[0]              }
     getColor()                         { return this._turn ? Colors.black : Colors.white }
-    addPieceToList(piece)              { this._pieces[piece.squareName] = piece          }
-    getPiece(squareName)               { this._pieces[squareName];                       }
-    /**
-     * @returns {Piece[]}
-     */
-    getAllPieces()                     { return Object.values(this._pieces);             }
-    createPieces() {
-        let square = 56;
-        const piecesLayout = this.getPiecesLayout();
-        for (let i = 0; i < piecesLayout.length; i++) {
-          if (isNumeric(piecesLayout[i])) { square += parseInt(piecesLayout[i]); }
-          else if (piecesLayout[i] == "/") square += -16;
-          else {
-            const pieceName = letterToPiece[piecesLayout[i]]
-            const [rankIndex, fileIndex] = getRankIndexAndFileIndex(square);
-            this.addPieceToList(new Piece("", pieceName, rankIndex, fileIndex));
-            square += 1;
-          }
-       }
+    addSquareToList(square)            { this._squares[square.name] = square             }
+    
+    async get_moves() {
+        /**
+         * @type {string[]}
+         */
+        const results = await invoke("get_moves", {fen: this._fen})
+        return Array.from(results, (move) => new Move(move));
+    }
+
+    getAllPieces()                     { return this._pieces.getAllPieces()}
+
+    getAllSquares()                    { return Object.values(this._squares);            }
+    
+    async createPieces(boardController) {
+        const moves = await this.get_moves();
+        this._pieces.createPieces(moves, boardController);
+    }
+    
+    async initialize(boardController) {
+        this._squares.initialize(boardController.boardConfigs);
+        await this.createPieces(boardController);
     }
 }
 
 class BoardEvents {
     constructor() {
-        this.movedPlayedObservers = [];
+        this.moveStarting         = [];
+        this.moveFnished          = [];
         this.gameFnishedObservers = [];
         this.firstMoveObservers   = [];
         this.undoObservers        = [];
@@ -246,23 +321,51 @@ class BoardEvents {
 
     /**
      * @param {MouseEvent} e - The mouse event triggered by moving the mouse.
+     * @param {BoardConfigs} boardConfig
      */
-    movePieceWithMouse(e) {
+    movePieceWithMouse(e, boardConfig) {
         const piece = this.getClickedPiece();
-        if (!piece) return;
-        piece.img.style.left = pxToVw(e.pageX);
-        piece.img.style.top  = pxToVw(e.pageY);
+        if (piece) boardConfig.setPieceCenterOfTheMouse(e, piece);
     }
 
-    initialize() {
-        document.addEventListener("mousemove", this.movePieceWithMouse)
+    /**
+     * @param {MouseEvent} e - The mouse event triggered by moving the mouse.
+     * @param {Piece} piece
+     * @param {BoardConfigs} boardConfig 
+     */
+    grabPiece(e, piece, boardConfig) {
+        this.setClickPiece(piece);
+        piece.grabPiece();
+        boardConfig.setPieceCenterOfTheMouse(e, piece);
+    }   
+    /**
+     * @param {Piece} piece
+     */
+    ungrabPiece(piece) {
+        piece.removeGrab();
+        this.removeClickedPiece();
+        piece.resetPosition();
     }
-
-    terminate() {
-        document.removeEventListener("mousemove", this.movePieceWithMouse)
+    /**
+     * @param {MouseEvent} e - The mouse event triggered by moving the mouse.
+     * @param {Piece} piece
+     * @param {BoardConfigs} boardConfig 
+     */
+    handleGrabbingPieceClick(e, piece, boardConfig) {
+        const square = document.elementsFromPoint(e.pageX, e.pageY).find(div => div.classList.contains("square"));
+        if (square && square.classList.contains("target_square")) { }
+        else this.ungrabPiece(piece);
+    }
+    /**
+     * @param {MouseEvent} e - The mouse event triggered by moving the mouse.
+     * @param {Piece} piece
+     * @param {BoardConfigs} boardConfig 
+     */
+    pieceClicked(e, piece, boardConfig) {
+        if (piece.isGrabbingPiece()) this.handleGrabbingPieceClick(e, piece, boardConfig)
+        else this.grabPiece(e, piece, boardConfig)
     }
 }
-
 
 class BoardController {
     /**
@@ -271,26 +374,30 @@ class BoardController {
      * @param {BoardEvents} boardEvents
      */
     constructor(boardConfigs, gameState, boardEvents, boardStrategy) {
-        this.configs = boardConfigs;
+        this.boardConfigs = boardConfigs;
         this.gameState = gameState;
         this.boardEvents = boardEvents;
         this.boardStrategy = boardStrategy;
+        this.mouseMoveEvent = this.mouseMoveEvent.bind(this);
         this.initialize();
     }
+    mouseMoveEvent(e) { this.boardEvents.movePieceWithMouse(e, this.boardConfigs) }
 
-    initialize() {
+    async initialize() {
+        document.addEventListener("mousemove", this.mouseMoveEvent)
         MenuButtonController.addObserver(this);
         MenuButtonController.makeVisible();
-        this.boardEvents.initialize();
-        this.gameState.createPieces();
-        this.configs.initialize();
-        this.configs.configurePiecesDiv(this);
-        
+        await this.gameState.initialize(this);
+        this.boardConfigs.initialize(this);
+    }
+
+    pieceClicked(e, piece) {
+        this.boardEvents.pieceClicked(e, piece, this.boardConfigs);
     }
 
     notify() {
-        this.boardEvents.terminate();
-        this.configs.terminate();
+        document.removeEventListener("mousemove", this.mouseMoveEvent);
+        this.boardConfigs.terminate();
     }
 }
 

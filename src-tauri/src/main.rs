@@ -64,6 +64,18 @@ fn delete_engine(engine_state: State<'_, EngineCommunicationsState>, id: usize) 
     engine_comminucation.delete_engine(id);
 }
 
+
+#[tauri::command]
+fn get_moves(fen: String) -> Vec<String> {
+    persa_chess::get_moves(fen)
+}
+
+
+#[tauri::command]
+fn make_move(fen: String, move_name: String) -> String {
+    persa_chess::make_move(fen, move_name)
+}
+
 fn main() {
     // Initialize your Tauri application with the state
     Builder::default()
@@ -78,6 +90,8 @@ fn main() {
             search_perft,
             stop_operation,
             delete_engine,
+            get_moves,
+            make_move,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

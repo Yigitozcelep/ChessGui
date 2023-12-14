@@ -10,6 +10,8 @@ const removeFile        = window.__TAURI__.fs.removeFile;
 const copyFile          = window.__TAURI__.fs.copyFile;
 const osSpecificSep     = window.__TAURI__.path.sep;
 const EngineFolderName  = "ChessEngines";
+const START_POS         = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
 
 class searchData {
     constructor() {
