@@ -78,6 +78,7 @@ fn make_move(fen: String, move_name: String) -> String {
 
 fn main() {
     // Initialize your Tauri application with the state
+    persa_chess::init_all_statics();
     Builder::default()
         .manage(EngineCommunicationsState(Mutex::new(EngineCommunications::new())))
         .invoke_handler(tauri::generate_handler![

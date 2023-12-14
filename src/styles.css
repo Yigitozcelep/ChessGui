@@ -191,17 +191,15 @@ body {
   z-index: 5;
  }
 
-.target_square {
-  width: 8.94vw;
-  height: 8.94vw;
-  background-color: red;
-  border: 0.15vw solid;
-  position: absolute;
-  z-index: 2;
+.target_square { 
+  background-color: red; 
+  border-style: solid;
 }
 
 .square {
   position: absolute;
+  margin: 0;
+  padding: 0;
   z-index: 1;
 }
 
