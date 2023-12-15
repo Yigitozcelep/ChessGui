@@ -203,12 +203,10 @@ body {
   z-index: 1;
 }
 
-#label_king_square {
-  width: 8.94vw;
-  height: 8.94vw;
+.label_king_square {
   background-color: rgb(205, 97, 97);
+  border-style: solid;
   position: absolute;
-  border: 0.15vw solid;
 }
 
 .winner_label {

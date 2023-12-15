@@ -76,6 +76,11 @@ fn make_move(fen: String, move_name: String) -> String {
     persa_chess::make_move(fen, move_name)
 }
 
+#[tauri::command]
+fn is_king_attacked(fen: String) -> bool {
+    persa_chess::is_king_attacked(fen)
+}
+
 fn main() {
     // Initialize your Tauri application with the state
     persa_chess::init_all_statics();
@@ -93,6 +98,7 @@ fn main() {
             delete_engine,
             get_moves,
             make_move,
+            is_king_attacked,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

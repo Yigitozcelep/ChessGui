@@ -9,13 +9,11 @@ const BoardImg        = document.getElementById("board_img") ;
 const START_FEN       = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const invoke          = window.__TAURI__.invoke
 
-
 const Colors = {
     white: "white",
     black: "black",
     charToColor(char) { return char == this.white[0] ? this.white : this.black }
 }
-
 
 const pieceNames = {
     king   : "king",
@@ -70,12 +68,21 @@ class Pieces {
     }
     addPieceToList(piece) { this._pieces[piece.squareName] = piece; }
     resetPieces()         { this._pieces = {};                      }
+    
+    /**
+     * @param {Colors[keyof Colors]} color
+     * @returns {Piece}
+     */
+    getKing(color) {
+        return this.getAllPieces().find(piece => piece.color == color && piece.pieceName == pieceNames.king)
+    }
     /**
      * @param {Move[]} moves 
      * @param {BoardController} boardController
      */
     createPieces(moves, boardController) {
         this._pieces = {};
+        PIECES_DIV.innerHTML = "";
         let square = 56;
         const piecesLayout = boardController.gameState.getPiecesLayout();
         for (let i = 0; i < piecesLayout.length; i++) {
@@ -85,6 +92,7 @@ class Pieces {
             const pieceName = letterToPiece[piecesLayout[i]]
             const [rankIndex, fileIndex] = getRankIndexAndFileIndex(square);
             const pieceMoves = moves.filter(move => move.sourceSquareName == getSquareName(rankIndex, fileIndex))
+            console.log(moves);
             this.addPieceToList(new Piece(pieceMoves, pieceName, rankIndex, fileIndex, boardController))
             square += 1;
           }
@@ -115,7 +123,6 @@ class Piece {
         this.div         = document.createElement("img");
         this.initializeDiv(boardController);
     }
-
     /**
      * @param {BoardController} boardController
      */
@@ -223,8 +230,15 @@ class Squares {
     /**
      * @returns {Square[]}
      */
-    getAllSquares() { return Object.values(this._squares); }
-    getSquare() {}
+    getAllSquares()        { return Object.values(this._squares); }
+    
+    /**
+     * @param {String} squareName 
+     * @returns {Square}
+     */
+    getSquare(squareName) {
+        return this._squares[squareName];
+    }
     /**
      * @param {MouseEvent} e
      * @returns {Square|null}
@@ -242,6 +256,9 @@ class Squares {
                 this.addSquareToList(new Square(rankIndex, fileIndex, boardConfig));
             }
         }
+    }
+    clearLabelKing() {
+        this.getAllSquares().forEach(square => square.clearLabelKingAttacked());
     }
     addSquareToList(square) {this._squares[square.name] = square }
 }
@@ -268,6 +285,14 @@ class Square {
         this.isMovableSquare = true;
         this.move = move;
         this.div.classList.add("target_square")
+    }
+
+    labelKingAttacked() {
+        this.div.classList.add("label_king_square");
+    }
+
+    clearLabelKingAttacked() {
+        this.div.classList.remove("label_king_square")
     }
     
     removeMovable() {
@@ -330,7 +355,18 @@ class GameState {
 
     async makeMove(move) {
         this._fen = await invoke("make_move", {fen: this._fen, moveName: move.name});
-        
+    }
+    async isKingAttacked() {
+        return await invoke("is_king_attacked", {fen: this._fen});
+    }
+
+    labelKing() {
+        const king = this._pieces.getKing(this.getColor())
+        const square = this._squares.getSquare(king.squareName)
+        square.labelKingAttacked();
+    }
+    clearLabelKing() {
+        this._squares.clearLabelKing();
     }
 }
 
@@ -382,7 +418,7 @@ class BoardEvents {
     showMovableSquares(piece, gameState) {
         piece.moves.forEach(move => {
             gameState.getAllSquares().forEach(square => {
-                if (move.targetSquareName == square.name) square.makeMovable(move);
+                if (move.targetSquareName == square.name) { square.makeMovable(move); }
             })
         })
     }
@@ -398,33 +434,30 @@ class BoardEvents {
     ungrabPiece(piece) {
         piece.removeGrab();
         this.removeClickedPiece();
-        piece.resetPosition();
     }
     /**
      * @param {MouseEvent} e - The mouse event triggered by moving the mouse.
      * @param {Piece} piece
-     * @param {BoardConfigs} boardConfig 
-     * @param {GameState} gameState 
+     * @param {BoardController} boardController 
      */
-    handleGrabbingPieceClick(e, piece, boardConfig, gameState) {
-        const clickedMovableSquare = gameState.getClickedMovableSquare(e);
-        if (clickedMovableSquare) gameState.makeMove(clickedMovableSquare.move);
-        else {
-            this.ungrabPiece(piece);
-            this.hideMovableSquares(gameState);
-        }
+    handleGrabbingPieceClick(e, piece, boardController) {
+        const clickedMovableSquare = boardController.gameState.getClickedMovableSquare(e);
+        const move = clickedMovableSquare ? clickedMovableSquare.move : null;
+        this.hideMovableSquares(boardController.gameState);
+        this.ungrabPiece(piece);
+        if (move) boardController.makeMove(move);
+        else piece.resetPosition();
     }
     /**
      * @param {MouseEvent} e - The mouse event triggered by moving the mouse.
      * @param {Piece} piece
-     * @param {BoardConfigs} boardConfig 
-     * @param {GameState} gameState 
+     * @param {BoardController} boardController 
      */
-    pieceClicked(e, piece, boardConfig, gameState) {
-        if (piece.isGrabbingPiece()) this.handleGrabbingPieceClick(e, piece, boardConfig, gameState)
+    pieceClicked(e, piece, boardController) {
+        if (piece.isGrabbingPiece()) this.handleGrabbingPieceClick(e, piece, boardController)
         else {
-            this.grabPiece(e, piece, boardConfig)
-            this.showMovableSquares(piece, gameState);
+            this.grabPiece(e, piece, boardController.boardConfigs)
+            this.showMovableSquares(piece, boardController.gameState);
         }
     }
 }
@@ -444,6 +477,18 @@ class BoardController {
         this.initialize();
     }
     mouseMoveEvent(e) { this.boardEvents.movePieceWithMouse(e, this.boardConfigs) }
+    
+    /**
+     * @param {Move} mov 
+     */
+    async makeMove(mov) {
+        await this.gameState.makeMove(mov);
+        const isKingAttacked = await this.gameState.isKingAttacked();
+        this.gameState.clearLabelKing();
+        if (isKingAttacked) this.gameState.labelKing();
+        this.gameState.createPieces(this);
+        
+    }
 
     async initialize() {
         document.addEventListener("mousemove", this.mouseMoveEvent)
@@ -454,7 +499,7 @@ class BoardController {
     }
 
     pieceClicked(e, piece) {
-        this.boardEvents.pieceClicked(e, piece, this.boardConfigs, this.gameState);
+        this.boardEvents.pieceClicked(e, piece, this);
     }
 
     notify() {
