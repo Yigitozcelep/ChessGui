@@ -336,6 +336,16 @@ class Square {
         this.div.style.borderWidth = boardConfig.getSquareBorder();
         SQUARES_DIV.appendChild(this.div);
     }
+
+    makeSelectionSquare() {
+        this.div.classList.add("promotion_selection_square")
+    }
+
+    removeSelection() {
+        this.div.classList.remove("promotion_selection_square")
+    }
+
+ 
 }
 
 class GameState {
@@ -367,6 +377,8 @@ class GameState {
     getAllPieces()                     { return this._pieces.getAllPieces();}
 
     getAllSquares()                    { return this._squares.getAllSquares();}
+
+    getSquare(name)                    { return this._squares.getSquare(name)}
     
     async createPieces(boardController) {
         const moves = await this.getMoves();
@@ -455,23 +467,31 @@ class BoardEvents {
      * @param {BoardController} boardController
      */
     async showMoveOptions(square, piece, moves, boardController) {
-        PIECES_DIV.style.opacity = "0.6";
-        BOARD_IMG.style.opacity  = "0.6";
-        const events = [];
-        const newPieces = []
-        const direction = boardController.gameState.getReverseDirection();
+        PIECES_DIV.style.opacity = "0.8";
+        BOARD_IMG.style.opacity  = "0.8";
+        const events       = []
+        const newPieces    = []
+        const newSquares   = []
+        const direction    = boardController.gameState.getReverseDirection();
         
         for (let i = 0; i < moves.length; i++) {
             const move = moves[i];
-            const newPiece = new Piece(move, move.promotedPiece, square.rankIndex + direction * i, square.fileIndex, boardController, SQUARES_DIV);
+            const newPiece = new Piece(move, move.promotedPiece, square.rankIndex + direction * i, square.fileIndex, boardController, SQUARES_DIV, false);
             newPieces.push(newPiece);
+            const squareOfNewPiece = boardController.gameState.getSquare(getSquareName(square.rankIndex + direction * i, square.fileIndex));
+            newPiece.div.style.cursor = "pointer";
+            squareOfNewPiece.makeSelectionSquare();
+            newPiece.div.addEventListener("mouseenter", () => squareOfNewPiece.div.classList.add("promotion_selection_square_mouse_in"))
+            newPiece.div.addEventListener("mouseleave", () => squareOfNewPiece.div.classList.remove("promotion_selection_square_mouse_in"))
+            newSquares.push(squareOfNewPiece);
             events.push(getPromiseFromEvent(newPiece.div, "click", move))
         }
         const result = await Promise.race(events);
         for (const newPiece of newPieces) newPiece.removeDiv();
+        for (const newSquare of newSquares) newSquare.removeSelection();
         PIECES_DIV.style.opacity = "1";
         BOARD_IMG.style.opacity  = "1";
-        boardController.makeMove(result);
+        boardController.makeMove(result, boardController.gameState);
     }
     /**
      * @param {GameState} gameState 

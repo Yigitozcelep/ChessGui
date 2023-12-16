@@ -351,3 +351,14 @@ body {
   transform: translateY(4px);
 }
 
+.promotion_selection_square {
+  background-color: red;
+  border-radius: 50%;
+  transition: border-radius 0.5s ease;
+}
+
+.promotion_selection_square_mouse_in {
+  background-color: orange;
+  border-radius: 0%;
+}
+
