@@ -354,6 +354,7 @@ body {
 .promotion_selection_square {
   background-color: red;
   border-radius: 50%;
+  cursor: pointer;
   transition: border-radius 0.5s ease;
 }
 

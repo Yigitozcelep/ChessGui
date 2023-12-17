@@ -178,6 +178,13 @@ class Piece {
         this.div.parentNode.removeChild(this.div);
     }
 
+    move(left, top) {
+        this.div.style.zIndex = 500;
+        this.div.style.transition = "all " + 0.25 + "s ease";
+        this.div.style.left = left;
+        this.div.style.top  = top;
+        return new Promise(resolve => setTimeout(resolve, 250));
+    }
 }
 
 class BoardConfigs {
@@ -473,7 +480,7 @@ class BoardEvents {
         const newPieces    = []
         const newSquares   = []
         const direction    = boardController.gameState.getReverseDirection();
-        
+        piece.removeDiv();
         for (let i = 0; i < moves.length; i++) {
             const move = moves[i];
             const newPiece = new Piece(move, move.promotedPiece, square.rankIndex + direction * i, square.fileIndex, boardController, SQUARES_DIV, false);
@@ -487,11 +494,12 @@ class BoardEvents {
             events.push(getPromiseFromEvent(newPiece.div, "click", move))
         }
         const result = await Promise.race(events);
+        new Piece([], result.promotedPiece, square.rankIndex, square.fileIndex, boardController, PIECES_DIV, false);
         for (const newPiece of newPieces) newPiece.removeDiv();
         for (const newSquare of newSquares) newSquare.removeSelection();
         PIECES_DIV.style.opacity = "1";
         BOARD_IMG.style.opacity  = "1";
-        boardController.makeMove(result, boardController.gameState);
+        boardController.makeMove(result, piece, square);
     }
     /**
      * @param {GameState} gameState 
@@ -517,7 +525,7 @@ class BoardEvents {
         this.hideMovableSquares(boardController.gameState);
         this.ungrabPiece(piece);
         if      (moves && moves.length > 1) { this.showMoveOptions(clickedMovableSquare, piece, moves, boardController)  }
-        else if (moves && moves.length == 1) boardController.makeMove(moves[0]);
+        else if (moves && moves.length == 1) boardController.makeMove(moves[0], piece, clickedMovableSquare);
         else piece.resetPosition();
     }
     /**
@@ -552,14 +560,16 @@ class BoardController {
     
     /**
      * @param {Move} mov 
+     * @param {Piece} piece
+     * @param {Square} targetSquare
      */
-    async makeMove(mov) {
+    async makeMove(mov, piece, targetSquare) {
+        await piece.move(this.boardConfigs.getPieceLeft(targetSquare.fileIndex), this.boardConfigs.getPieceTop(targetSquare.rankIndex));
         await this.gameState.makeMove(mov);
         const isKingAttacked = await this.gameState.isKingAttacked();
         this.gameState.clearLabelKing();
         if (isKingAttacked) this.gameState.labelKing();
         this.gameState.createPieces(this);
-        
     }
 
     async initialize() {
