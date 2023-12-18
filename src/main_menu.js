@@ -18,11 +18,13 @@ const TestEngineButton         = document.getElementById("TestEngine");
 const MenuContainer            = document.getElementById("menu_container");
 const MenuButton               = document.getElementById("menu_button");
 
+
+
 SaveEngineDiv.onclick        = () => EngineController.saveEngine();
 setWhitePlayerButton.onclick = () => setColorOption("white")
 SetBlackPlayerButton.onclick = () => setColorOption("black")
 PlayerVsEngineButton.onclick = () => {
-    new BoardController(new BoardConfigs(), new GameState(), new BoardEvents(), "");
+    new BoardController(new BoardConfigs(), new GameState().setFen(getFen()), new BoardEvents(), "");
     MenuContainer.style.visibility = "hidden";
 };
 

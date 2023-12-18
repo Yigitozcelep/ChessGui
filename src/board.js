@@ -363,7 +363,7 @@ class GameState {
         this._squares   = new Squares();
     }
     getReverseDirection()              {  return this.getColor() == Colors.white ? -1 : 1     }
-    setFen(fen)                        {  this._fen  = fen;                                   }
+    setFen(fen)                        {  this._fen  = fen;     return this;                  }
     getFen()                           {  return this._fen;                                   }
     getTurnIndex()                     {  return this._turn;                                  }
     getPiecesLayout()                  {  return this.getFen().split(" ")[0]                  }
@@ -497,6 +497,8 @@ class BoardEvents {
         new Piece([], result.promotedPiece, square.rankIndex, square.fileIndex, boardController, PIECES_DIV, false);
         for (const newPiece of newPieces) newPiece.removeDiv();
         for (const newSquare of newSquares) newSquare.removeSelection();
+        const targetPiece = boardController.gameState.getAllPieces().find(p => p.fileIndex == square.fileIndex && p.rankIndex == square.rankIndex);
+        if (targetPiece) targetPiece.removeDiv();
         PIECES_DIV.style.opacity = "1";
         BOARD_IMG.style.opacity  = "1";
         boardController.makeMove(result, piece, square);
