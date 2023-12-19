@@ -20,6 +20,11 @@ function getPromiseFromEvent(item, event, name) {
     })
 }
 
+const eventTypes = {
+    quit: {type: "quit"},
+    
+}
+
 const Colors = {
     white: "white",
     black: "black",
@@ -594,4 +599,4 @@ class BoardController {
 
 document.addEventListener('dragstart', (event) => event.preventDefault());
 
-export { BoardController, BoardConfigs, GameState, BoardEvents, Colors }
+export { BoardController, BoardConfigs, GameState, BoardEvents, Colors, eventTypes }

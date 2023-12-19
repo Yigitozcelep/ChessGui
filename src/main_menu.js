@@ -19,7 +19,6 @@ const MenuContainer            = document.getElementById("menu_container");
 const MenuButton               = document.getElementById("menu_button");
 
 
-
 SaveEngineDiv.onclick        = () => EngineController.saveEngine();
 setWhitePlayerButton.onclick = () => setColorOption("white")
 SetBlackPlayerButton.onclick = () => setColorOption("black")
