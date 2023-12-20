@@ -20,11 +20,6 @@ function getPromiseFromEvent(item, event, name) {
     })
 }
 
-const eventTypes = {
-    quit: {type: "quit"},
-    
-}
-
 const Colors = {
     white: "white",
     black: "black",
@@ -590,8 +585,8 @@ class BoardController {
     pieceClicked(e, piece) {
         this.boardEvents.pieceClicked(e, piece, this);
     }
-
-    notify() {
+    
+    terminate() {
         document.removeEventListener("mousemove", this.mouseMoveEvent);
         this.boardConfigs.terminate();
     }
@@ -599,4 +594,4 @@ class BoardController {
 
 document.addEventListener('dragstart', (event) => event.preventDefault());
 
-export { BoardController, BoardConfigs, GameState, BoardEvents, Colors, eventTypes }
+export { BoardController, BoardConfigs, GameState, BoardEvents, Colors}

@@ -1,17 +1,32 @@
-import { Colors, eventTypes } from "./board.js";
+import { Colors } from "./board.js";
+
+const formatMiliSecond = (miliSec) => `${Math.floor(miliSec / MinuteToMilliSecond)}.${Math.floor((miliSec % 60000) / SecondToMilliSecond)}`
+const MinuteToMilliSecond = 60000;
+const SecondToMilliSecond = 1000;
 
 
 class TimeDiv {
     /**
-    * @param {HTMLDivElement} div
+    * @param {HTMLDivElement} imgDiv
+    * @param {HTMLDivElement} timeDiv
     * @param {Colors[keyof Colors]} color
+    * @param {Number} totalTime,
     */
-    constructor(div, color) {
-        this.div = div
-        this.div.style.visibility = "visible";
+    constructor(imgDiv, timeDiv, color, totalTime) {
+        this.imgDiv                   = imgDiv
+        this.timeDiv                  = timeDiv;
+        this.totalTime                = totalTime;
+        this.imgDiv.style.visibility  = "visible";
+        this.timeDiv.style.visibility = "visible";
+        this.timeDiv.innerHTML        = formatMiliSecond(totalTime);
     }
     
-    notify(event) {
-        if      (event.type == eventTypes.quit.type) { this.div.style.visibility = "hidden";}
+    terminate() {
+        this.imgDiv.style.visibility  = "hidden";
+        this.timeDiv.style.visibility = "hidden";
     }
 }
+
+
+
+export { TimeDiv }

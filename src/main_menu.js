@@ -1,5 +1,6 @@
 import { EngineController, searchData } from "./engine_controller.js"
 import { BoardConfigs, BoardController, GameState, BoardEvents, Colors } from "./board.js";
+import { TimeDiv } from "./board_helpers.js";
 
 const SetBlackPlayerButton     = document.getElementById("set_black_player_button");
 const setWhitePlayerButton     = document.getElementById("set_white_player_button");
@@ -18,11 +19,23 @@ const TestEngineButton         = document.getElementById("TestEngine");
 const MenuContainer            = document.getElementById("menu_container");
 const MenuButton               = document.getElementById("menu_button");
 
+const TopTimePlayerDiv         = document.getElementById("top_player_time_svg");
+const TopTimeRobotDiv          = document.getElementById("top_robot_time_svg");
+const TopTimeDiv               = document.getElementById("top_time_div");
+
+const BottomTimePlayerDiv      = document.getElementById("bottom_player_time_svg");
+const BottomTimeRobotDiv       = document.getElementById("bottom_robot_time_svg");
+const BottomTimeDiv            = document.getElementById("bottom_time_div");
 
 SaveEngineDiv.onclick        = () => EngineController.saveEngine();
 setWhitePlayerButton.onclick = () => setColorOption("white")
 SetBlackPlayerButton.onclick = () => setColorOption("black")
 PlayerVsEngineButton.onclick = () => {
+    const topTimeClass    = new TimeDiv(TopTimePlayerDiv, TopTimeDiv, "white", 5000);
+    const bottomTimeClass = new TimeDiv(BottomTimeRobotDiv, BottomTimeDiv, "black", 5000);
+    MenuButtonController.addObserver(topTimeClass);
+    MenuButtonController.addObserver(bottomTimeClass);
+    new BoardEvents();
     new BoardController(new BoardConfigs(), new GameState().setFen(getFen()), new BoardEvents(), "");
     MenuContainer.style.visibility = "hidden";
 };
@@ -50,11 +63,10 @@ DeleteEngineDiv.onclick = () => EngineController.deleteEngine()
 
 const MenuButtonController = {
     observers: [],
-    getClickedEvent()        {   return "main_menu_button_clicked"                            },
     addObserver(observer)    {  this.observers.push(observer)                                 },
     removeObserver(observer) {  this.observers = this.observers.filter(el => el != observer)  },
     clickMainMenu() {
-        for (let observer of this.observers) observer.notify(this.getClickedEvent());
+        for (let observer of this.observers) observer.terminate();
         MenuContainer.style.visibility = "visible";
         MenuButton.style.visibility = "hidden";
     },
