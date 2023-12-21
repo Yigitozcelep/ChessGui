@@ -1,5 +1,6 @@
 import { EngineController } from "./engine_controller.js";
 import { MenuButtonController } from "./main_menu.js";
+import { newRoundEventInfos } from "./board_helpers.js";
 
 const BOARD_CONTAINER = document.getElementById("board_container");
 const PIECES_DIV      = document.getElementById("pieces_container");
@@ -417,7 +418,7 @@ class GameState {
 class BoardEvents {
     constructor() {
         this.moveStarting         = [];
-        this.moveFnished          = [];
+        this.newRound             = [];
         this.gameFnishedObservers = [];
         this.firstMoveObservers   = [];
         this.undoObservers        = [];
@@ -572,8 +573,10 @@ class BoardController {
         this.gameState.clearLabelKing();
         if (isKingAttacked) this.gameState.labelKing();
         this.gameState.createPieces(this);
+        console.log(this.boardEvents.newRound)
+        for (let obj of this.boardEvents.newRound) {obj.newRound(new newRoundEventInfos(mov, piece, this.gameState.getColor(), targetSquare, this.gameState.getFen()));}
     }
-
+    
     async initialize() {
         document.addEventListener("mousemove", this.mouseMoveEvent)
         MenuButtonController.addObserver(this);
@@ -594,4 +597,4 @@ class BoardController {
 
 document.addEventListener('dragstart', (event) => event.preventDefault());
 
-export { BoardController, BoardConfigs, GameState, BoardEvents, Colors}
+export { BoardController, BoardConfigs, GameState, BoardEvents, Colors }

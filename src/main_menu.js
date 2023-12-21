@@ -31,12 +31,13 @@ SaveEngineDiv.onclick        = () => EngineController.saveEngine();
 setWhitePlayerButton.onclick = () => setColorOption("white")
 SetBlackPlayerButton.onclick = () => setColorOption("black")
 PlayerVsEngineButton.onclick = () => {
-    const topTimeClass    = new TimeDiv(TopTimePlayerDiv, TopTimeDiv, "white", 5000);
-    const bottomTimeClass = new TimeDiv(BottomTimeRobotDiv, BottomTimeDiv, "black", 5000);
+    const topTimeClass    = new TimeDiv(TopTimePlayerDiv, TopTimeDiv, "white", 500000);
+    const bottomTimeClass = new TimeDiv(BottomTimeRobotDiv, BottomTimeDiv, "black", 500000);
     MenuButtonController.addObserver(topTimeClass);
     MenuButtonController.addObserver(bottomTimeClass);
-    new BoardEvents();
-    new BoardController(new BoardConfigs(), new GameState().setFen(getFen()), new BoardEvents(), "");
+    const boardEvents = new BoardEvents();
+    boardEvents.newRound.push(topTimeClass);
+    new BoardController(new BoardConfigs(), new GameState().setFen(getFen()), boardEvents, "");
     MenuContainer.style.visibility = "hidden";
 };
 
