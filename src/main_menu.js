@@ -28,16 +28,17 @@ const BottomTimeRobotDiv       = document.getElementById("bottom_robot_time_svg"
 const BottomTimeDiv            = document.getElementById("bottom_time_div");
 
 SaveEngineDiv.onclick        = () => EngineController.saveEngine();
-setWhitePlayerButton.onclick = () => setColorOption("white")
-SetBlackPlayerButton.onclick = () => setColorOption("black")
+setWhitePlayerButton.onclick = () => setColorOption(Colors.white)
+SetBlackPlayerButton.onclick = () => setColorOption(Colors.black)
 PlayerVsEngineButton.onclick = () => {
-    const topTimeClass    = new TimeDiv(TopTimePlayerDiv, TopTimeDiv, "white", 500000);
-    const bottomTimeClass = new TimeDiv(BottomTimeRobotDiv, BottomTimeDiv, "black", 500000);
+    const boardEvents = new BoardEvents();
+    const topTimeClass    = new TimeDiv(TopTimePlayerDiv, TopTimeDiv, Colors.black, 1000, boardEvents.gameFnishedObservers);
+    const bottomTimeClass = new TimeDiv(BottomTimeRobotDiv, BottomTimeDiv, Colors.white, 1000, boardEvents.gameFnishedObservers);
     MenuButtonController.addObserver(topTimeClass);
     MenuButtonController.addObserver(bottomTimeClass);
-    const boardEvents = new BoardEvents();
     boardEvents.newRound.push(topTimeClass);
-    new BoardController(new BoardConfigs(), new GameState().setFen(getFen()), boardEvents, "");
+    const board = new BoardController(new BoardConfigs(), new GameState().setFen(getFen()), boardEvents, "");
+    boardEvents.gameFnishedObservers.push(board);
     MenuContainer.style.visibility = "hidden";
 };
 

@@ -113,6 +113,7 @@ class Pieces {
      * @returns {Piece[]}
      */
     getAllPieces() { return Array.from(Object.values(this._pieces)); }
+    removeGrabbility() { this.getAllPieces().forEach(piece => piece.removeGrabbability())}
 }
 
 class Piece {
@@ -132,22 +133,25 @@ class Piece {
         this.initialTop  = boardController.boardConfigs.getPieceTop(rankIndex);
         this._isGrabbing = false;
         this.div         = document.createElement("img");
-        this.initializeDiv(boardController, containerDiv, isGrabbable);
+        this.boardController = boardController;
+        this.pieceListener = this.pieceListener.bind(this);
+        this.initializeDiv(containerDiv, isGrabbable);
     }
     /**
      * @param {BoardController} boardController
      */
-    initializeDiv(boardController, containerDiv, isGrabbable) {
+    pieceListener(e) { this.boardController.pieceClicked(e, this); }
+    initializeDiv(containerDiv, isGrabbable) {
         this.div.src      = "./svgs/" + this.fullName + ".svg";
         this.div.id           = this.fullName;
-        this.div.style.left   = boardController.boardConfigs.getPieceLeft(this.fileIndex);
-        this.div.style.top    = boardController.boardConfigs.getPieceTop(this.rankIndex);
-        this.div.style.width  = boardController.boardConfigs.getPieceSize();
-        this.div.style.height = boardController.boardConfigs.getPieceSize();
+        this.div.style.left   = this.boardController.boardConfigs.getPieceLeft(this.fileIndex);
+        this.div.style.top    = this.boardController.boardConfigs.getPieceTop(this.rankIndex);
+        this.div.style.width  = this.boardController.boardConfigs.getPieceSize();
+        this.div.style.height = this.boardController.boardConfigs.getPieceSize();
         this.div.classList.add("piece");
-        if (isGrabbable && this.color == boardController.gameState.getColor()) {
+        if (isGrabbable && this.color == this.boardController.gameState.getColor()) {
             this.div.classList.add("grabbable");
-            this.div.addEventListener("click", (e) => { boardController.pieceClicked(e, this); })
+            this.div.addEventListener("click", this.pieceListener)
         }
         containerDiv.appendChild(this.div);
     }
@@ -161,6 +165,11 @@ class Piece {
     grabPiece() {
         this._isGrabbing = true;
         this.div.classList.add("grabbing");
+    }
+    removeGrabbability() {
+        this.removeGrab();
+        this.div.classList.remove("grabbable");
+        this.div.removeEventListener("click", this.pieceListener);
     }
 
     removeGrab() {
@@ -413,6 +422,7 @@ class GameState {
     clearLabelKing() {
         this._squares.clearLabelKing();
     }
+    removeGrabbability() { this._pieces.removeGrabbility() }
 }
 
 class BoardEvents {
@@ -587,6 +597,11 @@ class BoardController {
 
     pieceClicked(e, piece) {
         this.boardEvents.pieceClicked(e, piece, this);
+    }
+
+    gameFnished() {
+        this.gameState.removeGrabbability();
+        
     }
     
     terminate() {

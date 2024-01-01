@@ -28,7 +28,7 @@ class TimeDiv {
     * @param {Colors[keyof Colors]} color
     * @param {Number} totalTime,
     */
-    constructor(imgDiv, timeDiv, color, totalTime) {
+    constructor(imgDiv, timeDiv, color, totalTime, events) {
         this.updateTimeInterval       = 200;
         this.imgDiv                   = imgDiv
         this.timeDiv                  = timeDiv;
@@ -38,6 +38,7 @@ class TimeDiv {
         this.timeDiv.innerHTML        = formatMiliSecond(totalTime);
         this.pastTimes                = [totalTime]
         this.color                    = color;
+        this.events                   = events;
         this.currentInterval          = null;
     }
     getCurrentTime() { return this.pastTimes.at(-1); }
@@ -51,10 +52,15 @@ class TimeDiv {
     }
 
     startTime() {
+        if (this.getCurrentTime <= 0) return;
         this.currentInterval = setInterval(() => {
             const currentTime = this.getCurrentTime() - 200;
             this.pastTimes.push(currentTime)
             this.timeDiv.innerHTML = formatMiliSecond(currentTime);
+            if (currentTime <= 0) { 
+                for (let obj of this.events) {obj.gameFnished();}
+                this.stopTime();
+            }
         }, 200);
     }
     
